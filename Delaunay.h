@@ -7,8 +7,7 @@
 
 //REFERENCES:
 //http://www.geom.uiuc.edu/~samuelp/del_project.html
-
-typedef std::pair<sf::Vector2f*, sf::Vector2f*> DelaunayEdge;
+//http://www.sccg.sk/~samuelcik/dgs/quad_edge.pdf
 
 class Delaunay
 {
@@ -18,17 +17,29 @@ public:
 	~Delaunay();
 
 private:
+	struct Edge
+	{
+		Edge(sf::Vector2f* o, sf::Vector2f* d, Edge* ccwo = nullptr, Edge* cwo = nullptr, Edge* ccwd = nullptr, Edge* cwd = nullptr);
+
+		sf::Vector2f* origin;
+		sf::Vector2f* destination;
+		Edge* ccwAroundOrigin;
+		Edge* cwAroundOrigin;
+		Edge* ccwAroundDestination;
+		Edge* cwAroundDestination;
+	};
+
 	const float WIDTH;
 	const float HEIGHT;
 
 	std::vector<sf::Vector2f*> sites;
-	std::unordered_set<DelaunayEdge*> edges;
+	std::unordered_set<Edge*> edges;
 
 	static bool compareVector2fPtr(sf::Vector2f* a, sf::Vector2f* b);
 	static int getOrientation(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c);
 
-	std::vector<DelaunayEdge*> triangulate(int firstSiteIndex, int lastSiteIndex);
-	std::vector<DelaunayEdge*> triangulate3(int firstSiteIndex, int lastSiteIndex);
-	std::vector<DelaunayEdge*> triangulate2(int firstSiteIndex, int lastSiteIndex);
-	std::vector<DelaunayEdge*> merge(std::vector<DelaunayEdge*> leftEdges, std::vector<DelaunayEdge*> rightEdges);
+	std::vector<Edge*> triangulate(int firstSiteIndex, int lastSiteIndex);
+	std::vector<Edge*> triangulate3(int firstSiteIndex, int lastSiteIndex);
+	std::vector<Edge*> triangulate2(int firstSiteIndex, int lastSiteIndex);
+	std::vector<Edge*> merge(std::vector<Edge*> leftEdges, std::vector<Edge*> rightEdges);
 };
