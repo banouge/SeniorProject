@@ -27,13 +27,9 @@ Delaunay::Delaunay(int numSites, float width, float height) : WIDTH(width), HEIG
 	}
 }
 
-Delaunay::Delaunay(std::vector<sf::Vector2f*> &siteList, float width, float height) : WIDTH(width), HEIGHT(height)
+Delaunay::Delaunay(std::vector<sf::Vector2f*> siteList, float width, float height) : WIDTH(width), HEIGHT(height)
 {
-	//make copies of provided sites so that the destructor won't destroy the originals
-	for (sf::Vector2f* site : siteList)
-	{
-		sites.push_back(new sf::Vector2f(site->x, site->y));
-	}
+	sites = siteList;
 
 	//there can't be edges without at least 2 vertices
 	if (sites.size() > 1)
@@ -91,11 +87,8 @@ std::vector<DelaunayEdge*> Delaunay::triangulate(int firstSiteIndex, int lastSit
 	std::vector<DelaunayEdge*> leftEdges = triangulate(firstSiteIndex, middleSiteIndex);
 	std::vector<DelaunayEdge*> rightEdges = triangulate(middleSiteIndex + 1, lastSiteIndex);
 
-	//TODO: merge
-
-	//TODO: add edges to edge set once we know they won't be removed
-
-	return std::vector<DelaunayEdge*>();
+	//merge
+	return merge(leftEdges, rightEdges);
 }
 
 //base case for 3 vertices
@@ -173,12 +166,15 @@ std::vector<DelaunayEdge*> Delaunay::triangulate3(int firstSiteIndex, int lastSi
 	DelaunayEdge* edge2 = new DelaunayEdge(site2, site3);
 	newEdges.push_back(edge1);
 	newEdges.push_back(edge2);
+	edges.emplace(edge1);
+	edges.emplace(edge2);
 
 	//last edge only exists if triangle is not degenerate
 	if (!isColinear)
 	{
 		DelaunayEdge* edge3 = new DelaunayEdge(site3, site1);
 		newEdges.push_back(edge3);
+		edges.emplace(edge3);
 	}
 
 	return newEdges;
@@ -193,5 +189,18 @@ std::vector<DelaunayEdge*> Delaunay::triangulate2(int firstSiteIndex, int lastSi
 	sf::Vector2f* lastSite = sites.at(lastSiteIndex);
 	DelaunayEdge* edge = (firstSite->y < lastSite->y) ? (new DelaunayEdge(firstSite, lastSite)) : (new DelaunayEdge(lastSite, firstSite));
 	newEdges.push_back(edge);
+	edges.emplace(edge);
 	return newEdges;
+}
+
+std::vector<DelaunayEdge*> Delaunay::merge(std::vector<DelaunayEdge*> leftEdges, std::vector<DelaunayEdge*> rightEdges)
+{
+	//make base edge from bottom vertices of each side
+	std::vector<DelaunayEdge*> newHull;
+	DelaunayEdge* baseEdge = new DelaunayEdge(leftEdges.at(0)->first, rightEdges.at(0)->first);
+	DelaunayEdge* bottomEdge = baseEdge;
+	edges.emplace(baseEdge);
+
+	//TODO: zip (need quad-edge), get new hull (bottom-left-top-right or left-top-right-bottom)
+	return newHull;
 }

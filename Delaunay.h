@@ -14,7 +14,7 @@ class Delaunay
 {
 public:
 	Delaunay(int numSites = 0, float width = 1024.0f, float height = 2048.0f);
-	Delaunay(std::vector<sf::Vector2f*> &siteList, float width = 1024.0f, float height = 2048.0f);
+	Delaunay(std::vector<sf::Vector2f*> siteList, float width = 1024.0f, float height = 2048.0f);
 	~Delaunay();
 
 private:
@@ -30,4 +30,5 @@ private:
 	std::vector<DelaunayEdge*> triangulate(int firstSiteIndex, int lastSiteIndex);
 	std::vector<DelaunayEdge*> triangulate3(int firstSiteIndex, int lastSiteIndex);
 	std::vector<DelaunayEdge*> triangulate2(int firstSiteIndex, int lastSiteIndex);
+	std::vector<DelaunayEdge*> merge(std::vector<DelaunayEdge*> leftEdges, std::vector<DelaunayEdge*> rightEdges);
 };
