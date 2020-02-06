@@ -39,5 +39,5 @@ int ArmyHandler::getNumArmiesKilled(int numEnemies, int killRate)
 int ArmyHandler::weightedRound(double x)
 {
 	double floorX = floor(x);
-	return (uniformDistribution(rng) < x - floorX) ? (ceil(x)) : (floorX);
+	return (uniformDistribution(rng) < x - floorX) ? ((int)ceil(x)) : ((int)floorX);
 }
