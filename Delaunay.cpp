@@ -23,7 +23,7 @@ Delaunay::Delaunay(int numSites, float width, float height) : WIDTH(width), HEIG
 	if (numSites > 1)
 	{
 		std::sort(sites.begin(), sites.end(), compareVector2fPtr);
-		triangulate(0, numSites);
+		triangulate(0, numSites - 1);
 	}
 }
 
@@ -39,7 +39,7 @@ Delaunay::Delaunay(std::vector<sf::Vector2f*> &siteList, float width, float heig
 	if (sites.size() > 1)
 	{
 		std::sort(sites.begin(), sites.end(), compareVector2fPtr);
-		triangulate(0, sites.size());
+		triangulate(0, sites.size() - 1);
 	}
 }
 
@@ -67,7 +67,7 @@ bool Delaunay::compareVector2fPtr(sf::Vector2f* a, sf::Vector2f* b)
 //-1 = clockwise, 0 = colinear, 1 = counterclockwise
 int Delaunay::getOrientation(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c)
 {
-	float o = (b->y - a->y) * (c->x - b->x) - (c->y - b->y) * (b->x - a->x);
+	float o = (c->y - b->y) * (b->x - a->x) - (b->y - a->y) * (c->x - b->x);
 	return (o < 0.0f) ? (-1) : ((o > 0.0f) ? (1) : (0));
 }
 
