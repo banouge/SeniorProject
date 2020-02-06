@@ -1,11 +1,14 @@
 #pragma once
 
-#include <tuple>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 #include "SFML/System/Vector2.hpp"
 
 //REFERENCES:
 //http://www.geom.uiuc.edu/~samuelp/del_project.html
+
+typedef std::pair<sf::Vector2f*, sf::Vector2f*> DelaunayEdge;
 
 class Delaunay
 {
@@ -19,9 +22,12 @@ private:
 	const float HEIGHT;
 
 	std::vector<sf::Vector2f*> sites;
-	std::vector<std::tuple<sf::Vector2f*, sf::Vector2f*>> edges;
+	std::unordered_set<DelaunayEdge*> edges;
 
 	static bool compareVector2fPtr(sf::Vector2f* a, sf::Vector2f* b);
+	static int getOrientation(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c);
 
-	std::vector<std::tuple<sf::Vector2f*, sf::Vector2f*>> triangulate(int firstSiteIndex, int lastSiteIndex);
+	std::vector<DelaunayEdge*> triangulate(int firstSiteIndex, int lastSiteIndex);
+	std::vector<DelaunayEdge*> triangulate3(int firstSiteIndex, int lastSiteIndex);
+	std::vector<DelaunayEdge*> triangulate2(int firstSiteIndex, int lastSiteIndex);
 };
