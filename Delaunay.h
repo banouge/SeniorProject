@@ -36,10 +36,13 @@ private:
 	std::unordered_set<Edge*> edges;
 
 	static bool compareVector2fPtr(sf::Vector2f* a, sf::Vector2f* b);
+	static bool isOutsideCircumcircle(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c, sf::Vector2f* p);
 	static int getOrientation(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c);
 
 	std::vector<Edge*> triangulate(int firstSiteIndex, int lastSiteIndex);
 	std::vector<Edge*> triangulate3(int firstSiteIndex, int lastSiteIndex);
 	std::vector<Edge*> triangulate2(int firstSiteIndex, int lastSiteIndex);
 	std::vector<Edge*> merge(std::vector<Edge*> leftEdges, std::vector<Edge*> rightEdges);
+	Edge* getLeftCandidate(Edge* baseEdge);
+	Edge* getRightCandidate(Edge* baseEdge);
 };

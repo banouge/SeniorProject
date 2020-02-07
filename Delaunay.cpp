@@ -61,6 +61,34 @@ bool Delaunay::compareVector2fPtr(sf::Vector2f* a, sf::Vector2f* b)
 	return a->x < b->x;
 }
 
+//a-b-c should be counterclockwise
+bool Delaunay::isOutsideCircumcircle(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c, sf::Vector2f* p)
+{
+	//matrix elements
+	float ax = a->x;
+	float ay = a->y;
+	float az = ax * ax + ay * ay;
+	float bx = b->x;
+	float by = b->y;
+	float bz = bx * bx + by * by;
+	float cx = c->x;
+	float cy = c->y;
+	float cz = cx * cx + cy * cy;
+	float px = p->x;
+	float py = p->y;
+	float pz = px * px + py * py;
+
+	//determinants
+	float detABC = ax * (by * cz - cy * bz) - bx * (ay * cz - cy * az) + cx * (ay * bz - by * az);
+	float detABP = ax * (by * pz - py * bz) - bx * (ay * pz - py * az) + px * (ay * bz - by * az);
+	float detACP = ax * (cy * pz - py * cz) - cx * (ay * pz - py * az) + px * (ay * cz - cy * az);
+	float detBCP = bx * (cy * pz - py * cz) - cx * (by * pz - py * bz) + px * (by * cz - cy * bz);
+	float det = detABC - detABP + detACP - detBCP;
+
+	//- = out, 0 = on, + = in
+	return det < 0.0f;
+}
+
 //-1 = clockwise, 0 = colinear, 1 = counterclockwise
 int Delaunay::getOrientation(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c)
 {
@@ -242,8 +270,20 @@ std::vector<Delaunay::Edge*> Delaunay::merge(std::vector<Edge*> leftEdges, std::
 	rightEdges.at(0)->ccwAroundOrigin = baseEdge;
 	rightEdges.at(rightEdges.size() - 1)->cwAroundDestination = baseEdge;
 
-	//TODO: zip (need circumcircle checker), get new hull (bottom-left-top-right or left-top-right-bottom)
+	//TODO: zip, reverse final new edge (it will be <- but should be -> to be cw), get new hull (bottom-left-top-right or left-top-right-bottom)
 	return newHull;
+}
+
+Delaunay::Edge* Delaunay::getLeftCandidate(Edge* baseEdge)
+{
+	//TODO: check ccwd in loop (baseD-baseO-p should be ccw and next p should be outside or next p should be baseO), remove invalid edges (maintain quad-edge)
+	return nullptr;
+}
+
+Delaunay::Edge* Delaunay::getRightCandidate(Edge* baseEdge)
+{
+	//TODO: check cwo in loop (baseD-baseO-p should be ccw and next p should be outside or next p should be baseD), remove invalid edges (maintain quad-edge)
+	return nullptr;
 }
 
 Delaunay::Edge::Edge(sf::Vector2f* o, sf::Vector2f* d, Edge* ccwo, Edge* cwo, Edge* ccwd, Edge* cwd)
