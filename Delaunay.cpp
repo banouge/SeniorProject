@@ -270,20 +270,129 @@ std::vector<Delaunay::Edge*> Delaunay::merge(std::vector<Edge*> leftEdges, std::
 	rightEdges.at(0)->ccwAroundOrigin = baseEdge;
 	rightEdges.at(rightEdges.size() - 1)->cwAroundDestination = baseEdge;
 
+	//TODO: we only directly access first and last edges in vectors, maybe only return those instead of whole vector?
 	//TODO: zip, reverse final new edge (it will be <- but should be -> to be cw), get new hull (bottom-left-top-right or left-top-right-bottom)
 	return newHull;
 }
 
 Delaunay::Edge* Delaunay::getLeftCandidate(Edge* baseEdge)
 {
-	//TODO: check ccwd in loop (baseD-baseO-p should be ccw and next p should be outside or next p should be baseO), remove invalid edges (maintain quad-edge)
-	return nullptr;
+	Edge* candidate = baseEdge;
+	Edge* nextCandidate = baseEdge->ccwAroundDestination;
+	sf::Vector2f* pivot = baseEdge->destination;
+	sf::Vector2f* nonPivot = baseEdge->origin;
+	sf::Vector2f* nextNonPivot = (nextCandidate->origin == pivot) ? (nextCandidate->destination) : (nextCandidate->origin);
+
+	while (true)
+	{
+		candidate = nextCandidate;
+		nonPivot = nextNonPivot;
+
+		//make sure angle < 180 degrees
+		if (getOrientation(baseEdge->destination, baseEdge->origin, nonPivot) != 1)
+		{
+			//we rotated too far w/o finding a valid candidate
+			return nullptr;
+		}
+
+		//rotate ccw around pivot and get next candidate's non-pivot endpoint
+		nextCandidate = (nextCandidate->origin == pivot) ? (nextCandidate->ccwAroundOrigin) : (nextCandidate->ccwAroundDestination);
+		nextNonPivot = (nextCandidate->origin == pivot) ? (nextCandidate->destination) : (nextCandidate->origin);
+
+		//if next candidate is base edge then there is no nextNonPivot to get in the way
+		if (nextCandidate == baseEdge || isOutsideCircumcircle(baseEdge->destination, baseEdge->origin, nonPivot, nextNonPivot))
+		{
+			return candidate;
+		}
+		else
+		{
+			//candidate is no longer a valid edge because circumcircle is not empty
+			removeEdge(candidate);
+		}
+	}
 }
 
 Delaunay::Edge* Delaunay::getRightCandidate(Edge* baseEdge)
 {
-	//TODO: check cwo in loop (baseD-baseO-p should be ccw and next p should be outside or next p should be baseD), remove invalid edges (maintain quad-edge)
-	return nullptr;
+	Edge* candidate = baseEdge;
+	Edge* nextCandidate = baseEdge->cwAroundOrigin;
+	sf::Vector2f* pivot = baseEdge->origin;
+	sf::Vector2f* nonPivot = baseEdge->destination;
+	sf::Vector2f* nextNonPivot = (nextCandidate->origin == pivot) ? (nextCandidate->destination) : (nextCandidate->origin);
+
+	while (true)
+	{
+		candidate = nextCandidate;
+		nonPivot = nextNonPivot;
+
+		//make sure angle < 180 degrees
+		if (getOrientation(baseEdge->destination, baseEdge->origin, nonPivot) != 1)
+		{
+			//we rotated too far w/o finding a valid candidate
+			return nullptr;
+		}
+
+		//rotate cw around pivot and get next candidate's non-pivot endpoint
+		nextCandidate = (nextCandidate->origin == pivot) ? (nextCandidate->cwAroundOrigin) : (nextCandidate->cwAroundDestination);
+		nextNonPivot = (nextCandidate->origin == pivot) ? (nextCandidate->destination) : (nextCandidate->origin);
+
+		//if next candidate is base edge then there is no nextNonPivot to get in the way
+		if (nextCandidate == baseEdge || isOutsideCircumcircle(baseEdge->destination, baseEdge->origin, nonPivot, nextNonPivot))
+		{
+			return candidate;
+		}
+		else
+		{
+			//candidate is no longer a valid edge because circumcircle is not empty
+			removeEdge(candidate);
+		}
+	}
+}
+
+void Delaunay::removeEdge(Edge* edge)
+{
+	//point edge->cwAroundDestination to edge->ccwAroundDestination
+	if (edge->cwAroundDestination->origin == edge->destination)
+	{
+		edge->cwAroundDestination->ccwAroundOrigin = edge->ccwAroundDestination;
+	}
+	else
+	{
+		edge->cwAroundDestination->ccwAroundDestination = edge->ccwAroundDestination;
+	}
+
+	//point edge->ccwAroundDestination to edge->cwAroundDestination
+	if (edge->ccwAroundDestination->origin == edge->destination)
+	{
+		edge->ccwAroundDestination->cwAroundOrigin = edge->cwAroundDestination;
+	}
+	else
+	{
+		edge->ccwAroundDestination->cwAroundDestination = edge->cwAroundDestination;
+	}
+
+	//point edge->cwAroundOrigin to edge->ccwAroundOrigin
+	if (edge->cwAroundOrigin->origin == edge->origin)
+	{
+		edge->cwAroundOrigin->ccwAroundOrigin = edge->ccwAroundOrigin;
+	}
+	else
+	{
+		edge->cwAroundOrigin->ccwAroundDestination = edge->ccwAroundOrigin;
+	}
+
+	//point edge->ccwAroundOrigin to edge->cwAroundOrigin
+	if (edge->ccwAroundOrigin->origin == edge->origin)
+	{
+		edge->ccwAroundOrigin->cwAroundOrigin = edge->cwAroundOrigin;
+	}
+	else
+	{
+		edge->ccwAroundOrigin->cwAroundDestination = edge->cwAroundOrigin;
+	}
+
+	edges.erase(edge);
+	delete edge;
 }
 
 Delaunay::Edge::Edge(sf::Vector2f* o, sf::Vector2f* d, Edge* ccwo, Edge* cwo, Edge* ccwd, Edge* cwd)

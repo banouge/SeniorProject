@@ -45,4 +45,5 @@ private:
 	std::vector<Edge*> merge(std::vector<Edge*> leftEdges, std::vector<Edge*> rightEdges);
 	Edge* getLeftCandidate(Edge* baseEdge);
 	Edge* getRightCandidate(Edge* baseEdge);
+	void removeEdge(Edge* edge);
 };
