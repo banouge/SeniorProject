@@ -140,6 +140,7 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate3(int firstSite
 
 		switch (getOrientation(site1, sites.at(middleSiteIndex), sites.at(lastSiteIndex)))
 		{
+			default:
 			case 1:
 			{
 				site2 = sites.at(lastSiteIndex);
@@ -171,6 +172,7 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate3(int firstSite
 
 		switch (getOrientation(site1, sites.at(middleSiteIndex), sites.at(firstSiteIndex)))
 		{
+			default:
 			case 1:
 			{
 				site2 = sites.at(firstSiteIndex);
@@ -250,15 +252,8 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate2(int firstSite
 std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::merge(std::pair<Edge*, Edge*> leftEdges, std::pair<Edge*, Edge*> rightEdges)
 {
 	//make base edge from bottom vertices of each side
-	Edge* baseEdge = new Edge(rightEdges.first->origin, leftEdges.first->origin, rightEdges.second, rightEdges.first, leftEdges.second, leftEdges.first);
+	Edge* baseEdge = createBottomEdge(leftEdges, rightEdges);
 	Edge* bottomEdge = baseEdge;
-	edges.emplace(baseEdge);
-
-	//fill in neighbors
-	leftEdges.first->ccwAroundOrigin = baseEdge;
-	leftEdges.second->cwAroundDestination = baseEdge;
-	rightEdges.first->ccwAroundOrigin = baseEdge;
-	rightEdges.second->cwAroundDestination = baseEdge;
 
 	//zip (make each base edge <-)
 	while (true)
@@ -303,8 +298,43 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::merge(std::pair<Edge*, Edg
 	reverseEdge(baseEdge);
 
 	//return edges on left and right of bottom vertex
-	bool isRightLower = bottomEdge->origin < bottomEdge->destination;
+	bool isRightLower = bottomEdge->origin->y < bottomEdge->destination->y;
 	return (isRightLower) ? (std::pair<Edge*, Edge*>(bottomEdge, rightEdges.second)) : (std::pair<Edge*, Edge*>(leftEdges.first, bottomEdge));
+}
+
+Delaunay::Edge* Delaunay::createBottomEdge(std::pair<Edge*, Edge*> leftEdges, std::pair<Edge*, Edge*> rightEdges)
+{
+	//make base edge from bottom vertices of each side
+	Edge* baseEdge = new Edge(rightEdges.first->origin, leftEdges.first->origin, rightEdges.second, rightEdges.first, leftEdges.second, leftEdges.first);
+	edges.emplace(baseEdge);
+
+	//add base edge as neighbor of left edges
+	if (leftEdges.first == leftEdges.second)
+	{
+		//upward edge from triangulate2, base edge only touches origin
+		leftEdges.first->ccwAroundOrigin = baseEdge;
+		leftEdges.first->cwAroundOrigin = baseEdge;
+	}
+	else
+	{
+		leftEdges.first->ccwAroundOrigin = baseEdge;
+		leftEdges.second->cwAroundDestination = baseEdge;
+	}
+
+	//add base edge as neighbor of right edges
+	if (rightEdges.first == rightEdges.second)
+	{
+		//upward edge from triangulate2, base edge only touches origin
+		rightEdges.first->ccwAroundOrigin = baseEdge;
+		rightEdges.first->cwAroundOrigin = baseEdge;
+	}
+	else
+	{
+		rightEdges.first->ccwAroundOrigin = baseEdge;
+		rightEdges.second->cwAroundDestination = baseEdge;
+	}
+
+	return baseEdge;
 }
 
 Delaunay::Edge* Delaunay::getLeftCandidate(Edge* baseEdge)
@@ -381,6 +411,106 @@ Delaunay::Edge* Delaunay::getRightCandidate(Edge* baseEdge)
 	}
 }
 
+Delaunay::Edge* Delaunay::addEdgeUsingLeftCandidate(Edge* baseEdge, Edge* candidateEdge, sf::Vector2f* endpoint)
+{
+	//get neighboring edge info
+	bool isCandidateDestinationSame = candidateEdge->destination == endpoint;
+	Edge* leftEdge = (isCandidateDestinationSame) ? (candidateEdge->ccwAroundDestination) : (candidateEdge->ccwAroundOrigin);
+	Edge* rightEdge = baseEdge->cwAroundOrigin;
+	bool isLeftDestinationSame = leftEdge->destination == endpoint;
+	bool isRightOriginSame = rightEdge->origin == baseEdge->origin;
+
+	//create new edge
+	Edge* newEdge = new Edge(baseEdge->origin, endpoint, baseEdge, rightEdge, leftEdge, candidateEdge);
+	edges.emplace(newEdge);
+	
+	//add new to left
+	if (isLeftDestinationSame)
+	{
+		leftEdge->cwAroundDestination = newEdge;
+	}
+	else
+	{
+		leftEdge->cwAroundOrigin = newEdge;
+	}
+
+	//add new to candidate
+	if (isCandidateDestinationSame)
+	{
+		candidateEdge->ccwAroundDestination = newEdge;
+	}
+	else
+	{
+		candidateEdge->ccwAroundOrigin = newEdge;
+	}
+
+	//add new to right
+	if (isRightOriginSame)
+	{
+		rightEdge->ccwAroundOrigin = newEdge;
+	}
+	else
+	{
+		rightEdge->ccwAroundDestination = newEdge;
+	}
+
+	//add new to base
+	baseEdge->cwAroundOrigin = newEdge;
+
+	//return new so that it can become the new base
+	return newEdge;
+}
+
+Delaunay::Edge* Delaunay::addEdgeUsingRightCandidate(Edge* baseEdge, Edge* candidateEdge, sf::Vector2f* endpoint)
+{
+	//get neighboring edge info
+	bool isCandidateOriginSame = candidateEdge->origin == endpoint;
+	Edge* leftEdge = baseEdge->ccwAroundDestination;
+	Edge* rightEdge = (isCandidateOriginSame) ? (candidateEdge->cwAroundOrigin) : (candidateEdge->cwAroundDestination);
+	bool isLeftDestinationSame = leftEdge->destination == baseEdge->destination;
+	bool isRightOriginSame = rightEdge->origin == endpoint;
+
+	//create new edge
+	Edge* newEdge = new Edge(endpoint, baseEdge->destination, candidateEdge, rightEdge, leftEdge, baseEdge);
+	edges.emplace(newEdge);
+
+	//add new to left
+	if (isLeftDestinationSame)
+	{
+		leftEdge->cwAroundDestination = newEdge;
+	}
+	else
+	{
+		leftEdge->cwAroundOrigin = newEdge;
+	}
+
+	//add new to candidate
+	if (isCandidateOriginSame)
+	{
+		candidateEdge->cwAroundOrigin = newEdge;
+	}
+	else
+	{
+		candidateEdge->cwAroundDestination = newEdge;
+	}
+
+	//add new to right
+	if (isRightOriginSame)
+	{
+		rightEdge->ccwAroundOrigin = newEdge;
+	}
+	else
+	{
+		rightEdge->ccwAroundDestination = newEdge;
+	}
+
+	//add new to base
+	baseEdge->ccwAroundDestination = newEdge;
+
+	//return new so that it can become the new base
+	return newEdge;
+}
+
 Delaunay::Edge* Delaunay::replaceEdge(Edge* edge, bool isReverse)
 {
 	Edge* reverse = nullptr;
@@ -447,105 +577,6 @@ Delaunay::Edge* Delaunay::reverseEdge(Edge* edge)
 void Delaunay::removeEdge(Edge* edge)
 {
 	replaceEdge(edge, false);
-}
-
-Delaunay::Edge* Delaunay::addEdgeUsingLeftCandidate(Edge* baseEdge, Edge* candidateEdge, sf::Vector2f* endpoint)
-{
-	//get neighboring edge info
-	bool isCandidateDestinationSame = candidateEdge->destination == endpoint;
-	Edge* leftEdge = (isCandidateDestinationSame) ? (candidateEdge->ccwAroundDestination) : (candidateEdge->ccwAroundOrigin);
-	Edge* rightEdge = baseEdge->cwAroundOrigin;
-	bool isLeftDestinationSame = leftEdge->destination == endpoint;
-	bool isRightOriginSame = rightEdge->origin == baseEdge->origin;
-
-	//create new edge
-	Edge* newEdge = new Edge(baseEdge->origin, endpoint, baseEdge, rightEdge, leftEdge, candidateEdge);
-	edges.emplace(newEdge);
-	
-	//add new to left
-	if (isLeftDestinationSame)
-	{
-		leftEdge->cwAroundDestination = newEdge;
-	}
-	else
-	{
-		leftEdge->cwAroundOrigin = newEdge;
-	}
-
-	//add new to candidate
-	if (isCandidateDestinationSame)
-	{
-		candidateEdge->ccwAroundDestination = newEdge;
-	}
-	else
-	{
-		candidateEdge->ccwAroundOrigin = newEdge;
-	}
-
-	//add new to right
-	if (isRightOriginSame)
-	{
-		rightEdge->ccwAroundOrigin = newEdge;
-	}
-	else
-	{
-		rightEdge->ccwAroundDestination = newEdge;
-	}
-
-	//add new to base
-	baseEdge->cwAroundOrigin = newEdge;
-
-	//return new so that it can become the new base
-	return newEdge;
-}
-
-Delaunay::Edge* Delaunay::addEdgeUsingRightCandidate(Edge* baseEdge, Edge* candidateEdge, sf::Vector2f* endpoint)
-{
-	//get neighboring edge info
-	bool isCandidateOriginSame = candidateEdge->origin == endpoint;
-	Edge* leftEdge = baseEdge->ccwAroundDestination;
-	Edge* rightEdge = (isCandidateOriginSame) ? (candidateEdge->cwAroundOrigin) : (candidateEdge->cwAroundDestination);
-	bool isLeftDestinationSame = leftEdge->destination == endpoint;
-	bool isRightOriginSame = rightEdge->origin == baseEdge->origin;
-
-	Edge* newEdge = new Edge(endpoint, baseEdge->destination);
-	edges.emplace(newEdge);
-
-	//add new to left
-	if (isLeftDestinationSame)
-	{
-		leftEdge->cwAroundDestination = newEdge;
-	}
-	else
-	{
-		leftEdge->cwAroundOrigin = newEdge;
-	}
-
-	//add new to candidate
-	if (isCandidateOriginSame)
-	{
-		candidateEdge->cwAroundOrigin = newEdge;
-	}
-	else
-	{
-		candidateEdge->cwAroundDestination = newEdge;
-	}
-
-	//add new to right
-	if (isRightOriginSame)
-	{
-		rightEdge->ccwAroundOrigin = newEdge;
-	}
-	else
-	{
-		rightEdge->ccwAroundDestination = newEdge;
-	}
-
-	//add new to base
-	baseEdge->ccwAroundDestination = newEdge;
-
-	//return new so that it can become the new base
-	return newEdge;
 }
 
 Delaunay::Edge::Edge(sf::Vector2f* o, sf::Vector2f* d, Edge* ccwo, Edge* cwo, Edge* ccwd, Edge* cwd)
