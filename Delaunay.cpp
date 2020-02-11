@@ -58,7 +58,7 @@ Delaunay::~Delaunay()
 
 bool Delaunay::compareVector2fPtr(sf::Vector2f* a, sf::Vector2f* b)
 {
-	return a->x < b->x;
+	return (a->x == b->x) ? (a->y < b->y) : (a->x < b->x);
 }
 
 //a-b-c should be counterclockwise
@@ -192,20 +192,18 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate3(int firstSite
 
 	//make edges
 	Edge* edge1 = new Edge(site1, site2);
-	Edge* edge2 = new Edge(site2, site3);
+	Edge* edge2 = new Edge(site2, site3, edge1, edge1);
 	edges.emplace(edge1);
 	edges.emplace(edge2);
 
 	//fill in neighbors
 	edge1->ccwAroundDestination = edge2;
 	edge1->cwAroundDestination = edge2;
-	edge2->ccwAroundOrigin = edge1;
-	edge2->cwAroundOrigin = edge1;
 
 	if (!isColinear)
 	{
 		//last edge only exists if triangle is not degenerate
-		Edge* edge3 = new Edge(site3, site1);
+		Edge* edge3 = new Edge(site3, site1, edge2, edge2, edge1, edge1);
 		edges.emplace(edge3);
 		
 		//fill in neighbors
@@ -213,10 +211,6 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate3(int firstSite
 		edge1->cwAroundOrigin = edge3;
 		edge2->ccwAroundDestination = edge3;
 		edge2->cwAroundDestination = edge3;
-		edge3->ccwAroundOrigin = edge2;
-		edge3->cwAroundOrigin = edge2;
-		edge3->ccwAroundDestination = edge1;
-		edge3->cwAroundDestination = edge1;
 		
 		//return edges on left and right of bottom vertex
 		return std::pair<Edge*, Edge*>(edge1, edge3);
@@ -256,15 +250,11 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate2(int firstSite
 std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::merge(std::pair<Edge*, Edge*> leftEdges, std::pair<Edge*, Edge*> rightEdges)
 {
 	//make base edge from bottom vertices of each side
-	Edge* baseEdge = new Edge(rightEdges.first->origin, leftEdges.first->origin);
+	Edge* baseEdge = new Edge(rightEdges.first->origin, leftEdges.first->origin, rightEdges.second, rightEdges.first, leftEdges.second, leftEdges.first);
 	Edge* bottomEdge = baseEdge;
 	edges.emplace(baseEdge);
 
 	//fill in neighbors
-	baseEdge->ccwAroundOrigin = rightEdges.second;
-	baseEdge->cwAroundOrigin = rightEdges.first;
-	baseEdge->ccwAroundDestination = leftEdges.second;
-	baseEdge->cwAroundDestination = leftEdges.first;
 	leftEdges.first->ccwAroundOrigin = baseEdge;
 	leftEdges.second->cwAroundDestination = baseEdge;
 	rightEdges.first->ccwAroundOrigin = baseEdge;
@@ -275,31 +265,37 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::merge(std::pair<Edge*, Edg
 	{
 		Edge* leftCandidate = getLeftCandidate(baseEdge);
 		Edge* rightCandidate = getRightCandidate(baseEdge);
+		sf::Vector2f* leftEndpoint = nullptr;
+		sf::Vector2f* rightEndpoint = nullptr;
 
 		if (leftCandidate)
 		{
-			if (rightCandidate)
-			{
-				//TODO: tiebreaker, not break
-				break;
-			}
-			else
-			{
-				//TODO: left, not break
-				break;
-			}
+			leftEndpoint = (leftCandidate->origin == baseEdge->destination) ? (leftCandidate->destination) : (leftCandidate->origin);
+		}
+
+		if (rightCandidate)
+		{
+			rightEndpoint = (rightCandidate->origin == baseEdge->origin) ? (rightCandidate->destination) : (rightCandidate->origin);
+		}
+
+		//make sure candidate exists and other candidate endpoint isn't in circumcircle (impossible to have both violate each other's circumcircles)
+		bool isLeftWinner = leftCandidate && (!rightCandidate || isOutsideCircumcircle(baseEdge->destination, baseEdge->origin, leftEndpoint, rightEndpoint));
+		bool isRightWinner = rightCandidate && !isLeftWinner;
+
+		if (isLeftWinner)
+		{
+			//make triangle with baseEdge and leftCandidate and make new edge new base edge
+			baseEdge = addEdgeUsingLeftCandidate(baseEdge, leftCandidate, leftEndpoint);
+		}
+		else if (isRightWinner)
+		{
+			//make triangle with baseEdge and rightCandidate and make new edge new base edge
+			baseEdge = addEdgeUsingRightCandidate(baseEdge, rightCandidate, rightEndpoint);
 		}
 		else
 		{
-			if (rightCandidate)
-			{
-				//TODO: right, not break
-				break;
-			}
-			else
-			{
-				break;
-			}
+			//done because there are no candidates left
+			break;
 		}
 	}
 
@@ -451,6 +447,105 @@ Delaunay::Edge* Delaunay::reverseEdge(Edge* edge)
 void Delaunay::removeEdge(Edge* edge)
 {
 	replaceEdge(edge, false);
+}
+
+Delaunay::Edge* Delaunay::addEdgeUsingLeftCandidate(Edge* baseEdge, Edge* candidateEdge, sf::Vector2f* endpoint)
+{
+	//get neighboring edge info
+	bool isCandidateDestinationSame = candidateEdge->destination == endpoint;
+	Edge* leftEdge = (isCandidateDestinationSame) ? (candidateEdge->ccwAroundDestination) : (candidateEdge->ccwAroundOrigin);
+	Edge* rightEdge = baseEdge->cwAroundOrigin;
+	bool isLeftDestinationSame = leftEdge->destination == endpoint;
+	bool isRightOriginSame = rightEdge->origin == baseEdge->origin;
+
+	//create new edge
+	Edge* newEdge = new Edge(baseEdge->origin, endpoint, baseEdge, rightEdge, leftEdge, candidateEdge);
+	edges.emplace(newEdge);
+	
+	//add new to left
+	if (isLeftDestinationSame)
+	{
+		leftEdge->cwAroundDestination = newEdge;
+	}
+	else
+	{
+		leftEdge->cwAroundOrigin = newEdge;
+	}
+
+	//add new to candidate
+	if (isCandidateDestinationSame)
+	{
+		candidateEdge->ccwAroundDestination = newEdge;
+	}
+	else
+	{
+		candidateEdge->ccwAroundOrigin = newEdge;
+	}
+
+	//add new to right
+	if (isRightOriginSame)
+	{
+		rightEdge->ccwAroundOrigin = newEdge;
+	}
+	else
+	{
+		rightEdge->ccwAroundDestination = newEdge;
+	}
+
+	//add new to base
+	baseEdge->cwAroundOrigin = newEdge;
+
+	//return new so that it can become the new base
+	return newEdge;
+}
+
+Delaunay::Edge* Delaunay::addEdgeUsingRightCandidate(Edge* baseEdge, Edge* candidateEdge, sf::Vector2f* endpoint)
+{
+	//get neighboring edge info
+	bool isCandidateOriginSame = candidateEdge->origin == endpoint;
+	Edge* leftEdge = baseEdge->ccwAroundDestination;
+	Edge* rightEdge = (isCandidateOriginSame) ? (candidateEdge->cwAroundOrigin) : (candidateEdge->cwAroundDestination);
+	bool isLeftDestinationSame = leftEdge->destination == endpoint;
+	bool isRightOriginSame = rightEdge->origin == baseEdge->origin;
+
+	Edge* newEdge = new Edge(endpoint, baseEdge->destination);
+	edges.emplace(newEdge);
+
+	//add new to left
+	if (isLeftDestinationSame)
+	{
+		leftEdge->cwAroundDestination = newEdge;
+	}
+	else
+	{
+		leftEdge->cwAroundOrigin = newEdge;
+	}
+
+	//add new to candidate
+	if (isCandidateOriginSame)
+	{
+		candidateEdge->cwAroundOrigin = newEdge;
+	}
+	else
+	{
+		candidateEdge->cwAroundDestination = newEdge;
+	}
+
+	//add new to right
+	if (isRightOriginSame)
+	{
+		rightEdge->ccwAroundOrigin = newEdge;
+	}
+	else
+	{
+		rightEdge->ccwAroundDestination = newEdge;
+	}
+
+	//add new to base
+	baseEdge->ccwAroundDestination = newEdge;
+
+	//return new so that it can become the new base
+	return newEdge;
 }
 
 Delaunay::Edge::Edge(sf::Vector2f* o, sf::Vector2f* d, Edge* ccwo, Edge* cwo, Edge* ccwd, Edge* cwd)

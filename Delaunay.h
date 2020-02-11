@@ -48,4 +48,6 @@ private:
 	Edge* replaceEdge(Edge* edge, bool isReverse);
 	Edge* reverseEdge(Edge* edge);
 	void removeEdge(Edge* edge);
+	Edge* addEdgeUsingLeftCandidate(Edge* baseEdge, Edge* candidateEdge, sf::Vector2f* endpoint);
+	Edge* addEdgeUsingRightCandidate(Edge* baseEdge, Edge* candidateEdge, sf::Vector2f* endpoint);
 };
