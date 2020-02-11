@@ -39,11 +39,13 @@ private:
 	static bool isOutsideCircumcircle(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c, sf::Vector2f* p);
 	static int getOrientation(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c);
 
-	std::vector<Edge*> triangulate(int firstSiteIndex, int lastSiteIndex);
-	std::vector<Edge*> triangulate3(int firstSiteIndex, int lastSiteIndex);
-	std::vector<Edge*> triangulate2(int firstSiteIndex, int lastSiteIndex);
-	std::vector<Edge*> merge(std::vector<Edge*> leftEdges, std::vector<Edge*> rightEdges);
+	std::pair<Edge*, Edge*> triangulate(int firstSiteIndex, int lastSiteIndex);
+	std::pair<Edge*, Edge*> triangulate3(int firstSiteIndex, int lastSiteIndex);
+	std::pair<Edge*, Edge*> triangulate2(int firstSiteIndex, int lastSiteIndex);
+	std::pair<Edge*, Edge*> merge(std::pair<Edge*, Edge*> leftEdges, std::pair<Edge*, Edge*> rightEdges);
 	Edge* getLeftCandidate(Edge* baseEdge);
 	Edge* getRightCandidate(Edge* baseEdge);
+	Edge* replaceEdge(Edge* edge, bool isReverse);
+	Edge* reverseEdge(Edge* edge);
 	void removeEdge(Edge* edge);
 };

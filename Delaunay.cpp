@@ -97,7 +97,7 @@ int Delaunay::getOrientation(sf::Vector2f* a, sf::Vector2f* b, sf::Vector2f* c)
 }
 
 //triangulate by recursively partitioning sites then merging using edges on convex hull of partitions (returns edges on covex hull)
-std::vector<Delaunay::Edge*> Delaunay::triangulate(int firstSiteIndex, int lastSiteIndex)
+std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate(int firstSiteIndex, int lastSiteIndex)
 {
 	int numSites = lastSiteIndex - firstSiteIndex + 1;
 
@@ -111,19 +111,19 @@ std::vector<Delaunay::Edge*> Delaunay::triangulate(int firstSiteIndex, int lastS
 		return triangulate3(firstSiteIndex, lastSiteIndex);
 	}
 
+	//TODO: probably won't work properly if bottom vertex is not unique (multiple at same y), may need way to get rightmost for left and leftmost for right (bool parameter?)
 	//partition
 	int middleSiteIndex = (lastSiteIndex - firstSiteIndex) / 2 + firstSiteIndex;
-	std::vector<Edge*> leftEdges = triangulate(firstSiteIndex, middleSiteIndex);
-	std::vector<Edge*> rightEdges = triangulate(middleSiteIndex + 1, lastSiteIndex);
+	std::pair<Edge*, Edge*> leftEdges = triangulate(firstSiteIndex, middleSiteIndex);
+	std::pair<Edge*, Edge*> rightEdges = triangulate(middleSiteIndex + 1, lastSiteIndex);
 
 	//merge
 	return merge(leftEdges, rightEdges);
 }
 
 //base case for 3 vertices
-std::vector<Delaunay::Edge*> Delaunay::triangulate3(int firstSiteIndex, int lastSiteIndex)
+std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate3(int firstSiteIndex, int lastSiteIndex)
 {
-	std::vector<Edge*> newEdges;
 	sf::Vector2f* site1;
 	sf::Vector2f* site2;
 	sf::Vector2f* site3;
@@ -193,8 +193,6 @@ std::vector<Delaunay::Edge*> Delaunay::triangulate3(int firstSiteIndex, int last
 	//make edges
 	Edge* edge1 = new Edge(site1, site2);
 	Edge* edge2 = new Edge(site2, site3);
-	newEdges.push_back(edge1);
-	newEdges.push_back(edge2);
 	edges.emplace(edge1);
 	edges.emplace(edge2);
 
@@ -208,7 +206,6 @@ std::vector<Delaunay::Edge*> Delaunay::triangulate3(int firstSiteIndex, int last
 	{
 		//last edge only exists if triangle is not degenerate
 		Edge* edge3 = new Edge(site3, site1);
-		newEdges.push_back(edge3);
 		edges.emplace(edge3);
 		
 		//fill in neighbors
@@ -220,6 +217,9 @@ std::vector<Delaunay::Edge*> Delaunay::triangulate3(int firstSiteIndex, int last
 		edge3->cwAroundOrigin = edge2;
 		edge3->ccwAroundDestination = edge1;
 		edge3->cwAroundDestination = edge1;
+		
+		//return edges on left and right of bottom vertex
+		return std::pair<Edge*, Edge*>(edge1, edge3);
 	}
 	else
 	{
@@ -228,16 +228,16 @@ std::vector<Delaunay::Edge*> Delaunay::triangulate3(int firstSiteIndex, int last
 		edge1->cwAroundOrigin = edge1;
 		edge2->ccwAroundDestination = edge2;
 		edge2->cwAroundDestination = edge2;
-	}
 
-	return newEdges;
+		//return bottom edge twice
+		return std::pair<Edge*, Edge*>(edge1, edge1);
+	}
 }
 
 //base case for 2 vertices
-std::vector<Delaunay::Edge*> Delaunay::triangulate2(int firstSiteIndex, int lastSiteIndex)
+std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate2(int firstSiteIndex, int lastSiteIndex)
 {
 	//start at bottom
-	std::vector<Edge*> newEdges;
 	sf::Vector2f* firstSite = sites.at(firstSiteIndex);
 	sf::Vector2f* lastSite = sites.at(lastSiteIndex);
 	Edge* edge = (firstSite->y < lastSite->y) ? (new Edge(firstSite, lastSite)) : (new Edge(lastSite, firstSite));
@@ -247,32 +247,68 @@ std::vector<Delaunay::Edge*> Delaunay::triangulate2(int firstSiteIndex, int last
 	edge->cwAroundOrigin = edge;
 	edge->ccwAroundDestination = edge;
 	edge->cwAroundDestination = edge;
-	newEdges.push_back(edge);
 	edges.emplace(edge);
-	return newEdges;
+
+	//return only edge twice
+	return std::pair<Edge*, Edge*>(edge, edge);
 }
 
-std::vector<Delaunay::Edge*> Delaunay::merge(std::vector<Edge*> leftEdges, std::vector<Edge*> rightEdges)
+std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::merge(std::pair<Edge*, Edge*> leftEdges, std::pair<Edge*, Edge*> rightEdges)
 {
 	//make base edge from bottom vertices of each side
-	std::vector<Edge*> newHull;
-	Edge* baseEdge = new Edge(rightEdges.at(0)->origin, leftEdges.at(0)->origin);
+	Edge* baseEdge = new Edge(rightEdges.first->origin, leftEdges.first->origin);
 	Edge* bottomEdge = baseEdge;
 	edges.emplace(baseEdge);
 
 	//fill in neighbors
-	baseEdge->ccwAroundOrigin = rightEdges.at(rightEdges.size() - 1);
-	baseEdge->cwAroundOrigin = rightEdges.at(0);
-	baseEdge->ccwAroundDestination = leftEdges.at(leftEdges.size() - 1);
-	baseEdge->cwAroundDestination = leftEdges.at(0);
-	leftEdges.at(0)->ccwAroundOrigin = baseEdge;
-	leftEdges.at(leftEdges.size() - 1)->cwAroundDestination = baseEdge;
-	rightEdges.at(0)->ccwAroundOrigin = baseEdge;
-	rightEdges.at(rightEdges.size() - 1)->cwAroundDestination = baseEdge;
+	baseEdge->ccwAroundOrigin = rightEdges.second;
+	baseEdge->cwAroundOrigin = rightEdges.first;
+	baseEdge->ccwAroundDestination = leftEdges.second;
+	baseEdge->cwAroundDestination = leftEdges.first;
+	leftEdges.first->ccwAroundOrigin = baseEdge;
+	leftEdges.second->cwAroundDestination = baseEdge;
+	rightEdges.first->ccwAroundOrigin = baseEdge;
+	rightEdges.second->cwAroundDestination = baseEdge;
 
-	//TODO: we only directly access first and last edges in vectors, maybe only return those instead of whole vector?
-	//TODO: zip, reverse final new edge (it will be <- but should be -> to be cw), get new hull (bottom-left-top-right or left-top-right-bottom)
-	return newHull;
+	//zip (make each base edge <-)
+	while (true)
+	{
+		Edge* leftCandidate = getLeftCandidate(baseEdge);
+		Edge* rightCandidate = getRightCandidate(baseEdge);
+
+		if (leftCandidate)
+		{
+			if (rightCandidate)
+			{
+				//TODO: tiebreaker, not break
+				break;
+			}
+			else
+			{
+				//TODO: left, not break
+				break;
+			}
+		}
+		else
+		{
+			if (rightCandidate)
+			{
+				//TODO: right, not break
+				break;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	//reverse top edge to keep outer edges clockwise
+	reverseEdge(baseEdge);
+
+	//return edges on left and right of bottom vertex
+	bool isRightLower = bottomEdge->origin < bottomEdge->destination;
+	return (isRightLower) ? (std::pair<Edge*, Edge*>(bottomEdge, rightEdges.second)) : (std::pair<Edge*, Edge*>(leftEdges.first, bottomEdge));
 }
 
 Delaunay::Edge* Delaunay::getLeftCandidate(Edge* baseEdge)
@@ -349,50 +385,72 @@ Delaunay::Edge* Delaunay::getRightCandidate(Edge* baseEdge)
 	}
 }
 
-void Delaunay::removeEdge(Edge* edge)
+Delaunay::Edge* Delaunay::replaceEdge(Edge* edge, bool isReverse)
 {
-	//point edge->cwAroundDestination to edge->ccwAroundDestination
+	Edge* reverse = nullptr;
+
+	if (isReverse)
+	{
+		reverse = new Edge(edge->destination, edge->origin, edge->ccwAroundDestination, edge->cwAroundDestination, edge->ccwAroundOrigin, edge->cwAroundOrigin);
+		edges.emplace(reverse);
+	}
+
+	//point edge->cwAroundDestination to edge->ccwAroundDestination or reversed edge
 	if (edge->cwAroundDestination->origin == edge->destination)
 	{
-		edge->cwAroundDestination->ccwAroundOrigin = edge->ccwAroundDestination;
+		edge->cwAroundDestination->ccwAroundOrigin = (isReverse) ? (reverse) : (edge->ccwAroundDestination);
 	}
 	else
 	{
-		edge->cwAroundDestination->ccwAroundDestination = edge->ccwAroundDestination;
+		edge->cwAroundDestination->ccwAroundDestination = (isReverse) ? (reverse) : (edge->ccwAroundDestination);
 	}
 
-	//point edge->ccwAroundDestination to edge->cwAroundDestination
+	//point edge->ccwAroundDestination to edge->cwAroundDestination or reversed edge
 	if (edge->ccwAroundDestination->origin == edge->destination)
 	{
-		edge->ccwAroundDestination->cwAroundOrigin = edge->cwAroundDestination;
+		edge->ccwAroundDestination->cwAroundOrigin = (isReverse) ? (reverse) : (edge->cwAroundDestination);
 	}
 	else
 	{
-		edge->ccwAroundDestination->cwAroundDestination = edge->cwAroundDestination;
+		edge->ccwAroundDestination->cwAroundDestination = (isReverse) ? (reverse) : (edge->cwAroundDestination);
 	}
 
-	//point edge->cwAroundOrigin to edge->ccwAroundOrigin
+	//point edge->cwAroundOrigin to edge->ccwAroundOrigin or reversed edge
 	if (edge->cwAroundOrigin->origin == edge->origin)
 	{
-		edge->cwAroundOrigin->ccwAroundOrigin = edge->ccwAroundOrigin;
+		edge->cwAroundOrigin->ccwAroundOrigin = (isReverse) ? (reverse) : (edge->ccwAroundOrigin);
 	}
 	else
 	{
-		edge->cwAroundOrigin->ccwAroundDestination = edge->ccwAroundOrigin;
+		edge->cwAroundOrigin->ccwAroundDestination = (isReverse) ? (reverse) : (edge->ccwAroundOrigin);
 	}
 
-	//point edge->ccwAroundOrigin to edge->cwAroundOrigin
+	//point edge->ccwAroundOrigin to edge->cwAroundOrigin or reversed edge
 	if (edge->ccwAroundOrigin->origin == edge->origin)
 	{
-		edge->ccwAroundOrigin->cwAroundOrigin = edge->cwAroundOrigin;
+		edge->ccwAroundOrigin->cwAroundOrigin = (isReverse) ? (reverse) : (edge->cwAroundOrigin);
 	}
 	else
 	{
-		edge->ccwAroundOrigin->cwAroundDestination = edge->cwAroundOrigin;
+		edge->ccwAroundOrigin->cwAroundDestination = (isReverse) ? (reverse) : (edge->cwAroundOrigin);
 	}
 
+	//remove old edge
 	edges.erase(edge);
 	delete edge;
+
+	//return reversed edge if edge was reversed
+	return reverse;
+}
+
+Delaunay::Edge* Delaunay::reverseEdge(Edge* edge)
+{
+	return replaceEdge(edge, true);
+}
+
+void Delaunay::removeEdge(Edge* edge)
+{
+	replaceEdge(edge, false);
 }
 
 Delaunay::Edge::Edge(sf::Vector2f* o, sf::Vector2f* d, Edge* ccwo, Edge* cwo, Edge* ccwd, Edge* cwd)
