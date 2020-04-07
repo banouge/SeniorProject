@@ -25,6 +25,7 @@ Delaunay::Delaunay(int numSites, float width, float height) : WIDTH(width), HEIG
 	{
 		std::sort(sites.begin(), sites.end(), compareVector2fPtr);
 		triangulate(0, numSites - 1);
+		createVoronoiCells();
 	}
 }
 
@@ -37,6 +38,7 @@ Delaunay::Delaunay(std::vector<sf::Vector2f*> siteList, float width, float heigh
 	{
 		std::sort(sites.begin(), sites.end(), compareVector2fPtr);
 		triangulate(0, sites.size() - 1);
+		createVoronoiCells();
 	}
 }
 
@@ -52,13 +54,30 @@ Delaunay::~Delaunay()
 		delete edge;
 	}
 
-	sites.clear();
-	edges.clear();
+	for (sf::ConvexShape* cell : voronoiCells)
+	{
+		delete cell;
+	}
+
+	for (sf::Vector2f* vertex : voronoiVertices)
+	{
+		delete vertex;
+	}
+}
+
+const std::vector<sf::ConvexShape*>& Delaunay::getVoronoiCells()
+{
+	return voronoiCells;
 }
 
 bool Delaunay::compareVector2fPtr(sf::Vector2f* a, sf::Vector2f* b)
 {
 	return (a->x == b->x) ? (a->y < b->y) : (a->x < b->x);
+}
+
+bool Delaunay::compareVector2fPtrFloatPairPtr(std::pair<sf::Vector2f*, float>* a, std::pair<sf::Vector2f*, float>* b)
+{
+	return a->second < b->second;
 }
 
 //a-b-c should be counterclockwise
@@ -577,6 +596,313 @@ Delaunay::Edge* Delaunay::reverseEdge(Edge* edge)
 void Delaunay::removeEdge(Edge* edge)
 {
 	replaceEdge(edge, false);
+}
+
+void Delaunay::createVoronoiCells()
+{
+	std::unordered_map<sf::Vector2f*, int> siteIndices;
+	std::unordered_map<sf::Vector2f*, Edge*> siteEdges;
+	std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*> siteVertexSets;
+	std::unordered_set<int> vertexIds;
+	sf::Vector2f* siteNW = sites.at(0);
+	sf::Vector2f* siteNE = sites.at(0);
+	sf::Vector2f* siteSW = sites.at(0);
+	sf::Vector2f* siteSE = sites.at(0);
+	float distNW = FLT_MAX;
+	float distNE = FLT_MAX;
+	float distSW = FLT_MAX;
+	float distSE = FLT_MAX;
+	int siteIndex = 0;
+
+	//create vertex sets and find corner sites and site indices
+	for (sf::Vector2f* site : sites)
+	{
+		float dXNW = site->x;
+		float dXNE = site->x - WIDTH;
+		float dXSW = site->x;
+		float dXSE = site->x - WIDTH;
+		float dYNW = site->y - HEIGHT;
+		float dYNE = site->y - HEIGHT;
+		float dYSW = site->y;
+		float dYSE = site->y;
+		float distNWNew = dXNW * dXNW + dYNW * dYNW;
+		float distNENew = dXNE * dXNE + dYNE * dYNE;
+		float distSWNew = dXSW * dXSW + dYSW * dYSW;
+		float distSENew = dXSE * dXSE + dYSE * dYSE;
+
+		siteVertexSets.emplace(site, new std::vector<std::pair<sf::Vector2f*, float>*>());
+		siteIndices.emplace(site, ++siteIndex);
+
+		if (distNWNew < distNW)
+		{
+			siteNW = site;
+			distNW = distNWNew;
+		}
+
+		if (distNENew < distNE)
+		{
+			siteNE = site;
+			distNE = distNENew;
+		}
+
+		if (distSWNew < distSW)
+		{
+			siteSW = site;
+			distSW = distSWNew;
+		}
+
+		if (distSENew < distSE)
+		{
+			siteSE = site;
+			distSE = distSENew;
+		}
+	}
+
+	//add corners to vertex sets
+	siteVertexSets.at(siteNW)->push_back(new std::pair<sf::Vector2f*, float>(new sf::Vector2f(0.0f, HEIGHT), atan2f(HEIGHT - siteNW->y, -siteNW->x)));
+	siteVertexSets.at(siteNE)->push_back(new std::pair<sf::Vector2f*, float>(new sf::Vector2f(WIDTH, HEIGHT), atan2f(HEIGHT - siteNW->y, WIDTH - siteNW->x)));
+	siteVertexSets.at(siteSW)->push_back(new std::pair<sf::Vector2f*, float>(new sf::Vector2f(0.0f, 0.0f), atan2f(-siteNW->y, -siteNW->x)));
+	siteVertexSets.at(siteSE)->push_back(new std::pair<sf::Vector2f*, float>(new sf::Vector2f(WIDTH, 0.0f), atan2f(-siteNW->y, WIDTH - siteNW->x)));
+
+	//get an edge for each vertex
+	for (Edge* edge : edges)
+	{
+		siteEdges.emplace(edge->origin, edge);
+		siteEdges.emplace(edge->destination, edge);
+	}
+
+	//create cells and clean up
+	for (sf::Vector2f* site : sites)
+	{
+		voronoiCells.push_back(createVoronoiCell(site, siteIndices, siteEdges, siteVertexSets, vertexIds));
+		
+		for (std::pair<sf::Vector2f*, float>* pair : *siteVertexSets.at(site))
+		{
+			delete pair;
+		}
+
+		delete siteVertexSets.at(site);
+	}
+}
+
+//find and add vertex (extend perpendicular bisector away from otherSite to intersect with outer walls)
+void Delaunay::addClipVertex(Edge* edge, sf::Vector2f* otherSite, int vertexId, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds)
+{
+	//ax + by = c
+	float a = edge->origin->x - edge->destination->x;
+	float b = edge->origin->y - edge->destination->y;
+	float c = (edge->origin->x * edge->origin->x - edge->destination->x * edge->destination->x + edge->origin->y * edge->origin->y - edge->destination->y * edge->destination->y) / 2.0f;
+
+	//edge center
+	float x = (edge->origin->x + edge->destination->x) / 2.0f;
+	float y = (edge->origin->y + edge->destination->y) / 2.0f;
+
+	//otherSite projected onto ax + by = c
+	float k = ((otherSite->x - x) * b + (y - otherSite->y) * a) / (a * a + b * b);
+	float u = x + b * k;
+	float v = y - a * k;
+
+	//check N wall
+	if (y >= v)
+	{
+		float n = (a == 0) ? (-1) : ((c - b * HEIGHT) / a);
+
+		if (n >= 0.0f && n <= WIDTH)
+		{
+			sf::Vector2f* vertex = new sf::Vector2f(n, HEIGHT);
+			vertexIds.emplace(vertexId);
+			voronoiVertices.emplace(vertex);
+			siteVertexSets.at(edge->origin)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->origin->y, vertex->x - edge->origin->x)));
+			siteVertexSets.at(edge->destination)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->destination->y, vertex->x - edge->destination->x)));
+		}
+	}
+
+	//check S wall
+	if (y <= v)
+	{
+		float n = (a == 0) ? (-1) : (c / a);
+
+		if (n >= 0.0f && n <= WIDTH)
+		{
+			sf::Vector2f* vertex = new sf::Vector2f(n, 0.0f);
+			vertexIds.emplace(vertexId);
+			voronoiVertices.emplace(vertex);
+			siteVertexSets.at(edge->origin)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->origin->y, vertex->x - edge->origin->x)));
+			siteVertexSets.at(edge->destination)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->destination->y, vertex->x - edge->destination->x)));
+		}
+	}
+
+	//check E wall
+	if (x >= u)
+	{
+		float n = (b == 0) ? (-1) : ((c - a * WIDTH) / b);
+
+		if (n >= 0.0f && n <= HEIGHT)
+		{
+			sf::Vector2f* vertex = new sf::Vector2f(WIDTH, n);
+			vertexIds.emplace(vertexId);
+			voronoiVertices.emplace(vertex);
+			siteVertexSets.at(edge->origin)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->origin->y, vertex->x - edge->origin->x)));
+			siteVertexSets.at(edge->destination)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->destination->y, vertex->x - edge->destination->x)));
+		}
+	}
+
+	//check W wall
+	if (x <= u)
+	{
+		float n = (b == 0) ? (-1) : (c / b);
+
+		if (n >= 0.0f && n <= HEIGHT)
+		{
+			sf::Vector2f* vertex = new sf::Vector2f(0.0f, n);
+			vertexIds.emplace(vertexId);
+			voronoiVertices.emplace(vertex);
+			siteVertexSets.at(edge->origin)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->origin->y, vertex->x - edge->origin->x)));
+			siteVertexSets.at(edge->destination)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->destination->y, vertex->x - edge->destination->x)));
+		}
+	}
+}
+
+//find and return circumcenter of triangle abc (intersection point of perpendicular bisectors of 2 edges)
+sf::Vector2f* Delaunay::getCircumcenter(sf::Vector2f* siteA, sf::Vector2f* siteB, sf::Vector2f* siteC)
+{
+	//ax + by = c
+	float a = siteA->x - siteB->x;
+	float b = siteA->y - siteB->y;
+	float c = (siteA->x * siteA->x - siteB->x * siteB->x + siteA->y * siteA->y - siteB->y * siteB->y) / 2.0f;
+
+	//dx + ey = f
+	float d = siteA->x - siteC->x;
+	float e = siteA->y - siteC->y;
+	float f = (siteA->x * siteA->x - siteC->x * siteC->x + siteA->y * siteA->y - siteC->y * siteC->y) / 2.0f;
+
+	float denominator = a * e - b * d;
+	return new sf::Vector2f((c * e - b * f) / denominator, (a * f - c * d) / denominator);
+}
+
+sf::ConvexShape* Delaunay::createVoronoiCell(sf::Vector2f* site, std::unordered_map<sf::Vector2f*, int>& siteIndices, std::unordered_map<sf::Vector2f*, Edge*>& siteEdges, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds)
+{
+	Edge* edge = siteEdges.at(site);
+	bool isSiteEdgeOrigin = edge->origin == site;
+	sf::Vector2f* edgeSite = (isSiteEdgeOrigin) ? (edge->destination) : (edge->origin);
+
+	//create cell vertices
+	do
+	{
+		Edge* nextEdge = (isSiteEdgeOrigin) ? (edge->ccwAroundOrigin) : (edge->ccwAroundDestination);
+		bool isSiteNextEdgeOrigin = nextEdge->origin == site;
+		bool shouldMake2Vertices = false;
+		sf::Vector2f* nextEdgeSite = (isSiteNextEdgeOrigin) ? (nextEdge->destination) : (nextEdge->origin);
+
+		//create cell vertex
+		if (getOrientation(nextEdgeSite, edgeSite, site) < 0)
+		{
+			//site trio forms vertex
+			int vertexId = getVertexId(siteIndices, nextEdgeSite, edgeSite, site);
+
+			//make sure vertex wasn't already created
+			if (!vertexIds.count(vertexId))
+			{
+				sf::Vector2f* vertex = getCircumcenter(site, edgeSite, nextEdgeSite);
+
+				if (vertex->x < 0.0f || vertex->x > WIDTH || vertex->y < 0.0f || vertex->y > HEIGHT)
+				{
+					//vertex is out of bounds
+					shouldMake2Vertices = true;
+					delete vertex;
+				}
+				else
+				{
+					//vertex is in bounds
+					vertexIds.emplace(vertexId);
+					voronoiVertices.emplace(vertex);
+					siteVertexSets.at(site)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - site->y, vertex->x - site->x)));
+					siteVertexSets.at(edgeSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edgeSite->y, vertex->x - edgeSite->x)));
+					siteVertexSets.at(nextEdgeSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - nextEdgeSite->y, vertex->x - nextEdgeSite->x)));
+				}
+			}
+		}
+		else
+		{
+			shouldMake2Vertices = true;
+		}
+
+		//create 2 cell vertices
+		if (shouldMake2Vertices)
+		{
+			//both edges form vertices with outer walls
+			int vertex1Id = getVertexId(siteIndices, edgeSite, site);
+			int vertex2Id = getVertexId(siteIndices, nextEdgeSite, site);
+
+			//make sure vertex wasn't already created
+			if (!vertexIds.count(vertex1Id))
+			{
+				addClipVertex(edge, nextEdgeSite, vertex1Id, siteVertexSets, vertexIds);
+			}
+
+			//make sure vertex wasn't already created
+			if (!vertexIds.count(vertex2Id))
+			{
+				addClipVertex(nextEdge, edgeSite, vertex2Id, siteVertexSets, vertexIds);
+			}
+		}
+
+		edge = nextEdge;
+		isSiteEdgeOrigin = isSiteNextEdgeOrigin;
+		edgeSite = nextEdgeSite;
+	}
+	while (edge != siteEdges.at(site));
+
+	sf::ConvexShape* cell = new sf::ConvexShape(siteVertexSets.at(site)->size());
+	std::sort(siteVertexSets.at(site)->begin(), siteVertexSets.at(site)->end(), compareVector2fPtrFloatPairPtr);
+
+	//add vertices to cell
+	for (int v = 0; v < siteVertexSets.at(site)->size(); ++v)
+	{
+		cell->setPoint(v, *siteVertexSets.at(site)->at(v)->first);
+	}
+
+	return cell;
+}
+
+int Delaunay::getVertexId(std::unordered_map<sf::Vector2f*, int>& siteIndices, sf::Vector2f* siteA, sf::Vector2f* siteB, sf::Vector2f* siteC)
+{
+	int indexA = siteIndices.at(siteA);
+	int indexB = siteIndices.at(siteB);
+	int indexC = siteIndices.at(siteC);
+	int base = sites.size() + 1;
+
+	if (indexA < indexB)
+	{
+		//ABC or ACB or CAB
+		if (indexA < indexC)
+		{
+			//ABC or ACB
+			return (indexB < indexC) ? ((indexA * base + indexB) * base + indexC) : ((indexA * base + indexC) * base + indexB);
+		}
+		else
+		{
+			//CAB
+			return (indexC * base + indexA) * base + indexB;
+		}
+	}
+	else if (indexB < indexC)
+	{
+		//BAC or BCA
+		return (indexA < indexC) ? ((indexB * base + indexA) * base + indexC) : ((indexB * base + indexC) * base + indexA);
+	}
+	else
+	{
+		//CBA
+		return (indexC * base + indexB) * base + indexA;
+	}
+}
+
+int Delaunay::getVertexId(std::unordered_map<sf::Vector2f*, int>& siteIndices, sf::Vector2f* siteA, sf::Vector2f* siteB)
+{
+	int indexA = siteIndices.at(siteA);
+	int indexB = siteIndices.at(siteB);
+	return (indexA < indexB) ? (indexA * (sites.size() + 1) + indexB) : (indexB * (sites.size() + 1) + indexA);
 }
 
 Delaunay::Edge::Edge(sf::Vector2f* o, sf::Vector2f* d, Edge* ccwo, Edge* cwo, Edge* ccwd, Edge* cwd)
