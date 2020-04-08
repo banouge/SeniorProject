@@ -54,7 +54,7 @@ Delaunay::~Delaunay()
 		delete edge;
 	}
 
-	for (sf::ConvexShape* cell : voronoiCells)
+	for (Territory* cell : voronoiCells)
 	{
 		delete cell;
 	}
@@ -65,7 +65,7 @@ Delaunay::~Delaunay()
 	}
 }
 
-const std::vector<sf::ConvexShape*>& Delaunay::getVoronoiCells()
+std::vector<Territory*>& Delaunay::getVoronoiCells()
 {
 	return voronoiCells;
 }
@@ -130,7 +130,6 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::triangulate(int firstSiteI
 		return triangulate3(firstSiteIndex, lastSiteIndex);
 	}
 
-	//TODO: probably won't work properly if bottom vertex is not unique (multiple at same y), may need way to get rightmost for left and leftmost for right (bool parameter?)
 	//partition
 	int middleSiteIndex = (lastSiteIndex - firstSiteIndex) / 2 + firstSiteIndex;
 	std::pair<Edge*, Edge*> leftEdges = triangulate(firstSiteIndex, middleSiteIndex);
@@ -314,7 +313,9 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::merge(std::pair<Edge*, Edg
 	}
 
 	//reverse top edge to keep outer edges clockwise
-	reverseEdge(baseEdge);
+	bool isBottomBase = bottomEdge == baseEdge;
+	baseEdge = reverseEdge(baseEdge);
+	bottomEdge = (isBottomBase) ? (baseEdge) : (bottomEdge);
 
 	//return edges on left and right of bottom vertex
 	bool isRightLower = bottomEdge->origin->y < bottomEdge->destination->y;
@@ -614,7 +615,7 @@ void Delaunay::createVoronoiCells()
 	float distSE = FLT_MAX;
 	int siteIndex = 0;
 
-	//create vertex sets and find corner sites and site indices
+	//create vertex sets and territories and find corner sites and site indices
 	for (sf::Vector2f* site : sites)
 	{
 		float dXNW = site->x;
@@ -632,6 +633,7 @@ void Delaunay::createVoronoiCells()
 
 		siteVertexSets.emplace(site, new std::vector<std::pair<sf::Vector2f*, float>*>());
 		siteIndices.emplace(site, ++siteIndex);
+		voronoiCells.push_back(new Territory("Territory " + std::to_string(siteIndex), site));
 
 		if (distNWNew < distNW)
 		{
@@ -672,95 +674,107 @@ void Delaunay::createVoronoiCells()
 	}
 
 	//create cells and clean up
-	for (sf::Vector2f* site : sites)
+	for (int s = 0; s < sites.size(); ++s)
 	{
-		voronoiCells.push_back(createVoronoiCell(site, siteIndices, siteEdges, siteVertexSets, vertexIds));
+		voronoiCells.at(s)->setShape(createVoronoiCell(sites.at(s), siteIndices, siteEdges, siteVertexSets, vertexIds));
 		
-		for (std::pair<sf::Vector2f*, float>* pair : *siteVertexSets.at(site))
+		for (std::pair<sf::Vector2f*, float>* pair : *siteVertexSets.at(sites.at(s)))
 		{
 			delete pair;
 		}
 
-		delete siteVertexSets.at(site);
+		delete siteVertexSets.at(sites.at(s));
 	}
 }
 
-//find and add vertex (extend perpendicular bisector away from otherSite to intersect with outer walls)
-void Delaunay::addClipVertex(Edge* edge, sf::Vector2f* otherSite, int vertexId, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds)
+bool Delaunay::isOtherSiteFar(sf::Vector2f* site, sf::Vector2f* otherSite, float x, float y)
 {
+	float dXS = site->x - x;
+	float dXO = otherSite->x - x;
+	float dYS = site->y - y;
+	float dYO = otherSite->y - y;
+	return dXS * dXS + dYS * dYS <= dXO * dXO + dYO * dYO;
+}
+
+//find and add vertex (extend perpendicular bisector)
+bool Delaunay::addClipVertex(sf::Vector2f* originSite, sf::Vector2f* destinationSite, sf::Vector2f* otherSite, sf::Vector2f* circumcenter, bool shouldExtendTowardCircumcenter, int vertexId, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds)
+{
+	bool wasVertexAdded = false;
+
 	//ax + by = c
-	float a = edge->origin->x - edge->destination->x;
-	float b = edge->origin->y - edge->destination->y;
-	float c = (edge->origin->x * edge->origin->x - edge->destination->x * edge->destination->x + edge->origin->y * edge->origin->y - edge->destination->y * edge->destination->y) / 2.0f;
+	float a = originSite->x - destinationSite->x;
+	float b = originSite->y - destinationSite->y;
+	float c = (originSite->x * originSite->x - destinationSite->x * destinationSite->x + originSite->y * originSite->y - destinationSite->y * destinationSite->y) / 2.0f;
 
 	//edge center
-	float x = (edge->origin->x + edge->destination->x) / 2.0f;
-	float y = (edge->origin->y + edge->destination->y) / 2.0f;
-
-	//otherSite projected onto ax + by = c
-	float k = ((otherSite->x - x) * b + (y - otherSite->y) * a) / (a * a + b * b);
-	float u = x + b * k;
-	float v = y - a * k;
+	float x = (originSite->x + destinationSite->x) / 2.0f;
+	float y = (originSite->y + destinationSite->y) / 2.0f;
 
 	//check N wall
-	if (y >= v)
+	if ((y >= circumcenter->y && !shouldExtendTowardCircumcenter) || (y <= circumcenter->y && shouldExtendTowardCircumcenter))
 	{
 		float n = (a == 0) ? (-1) : ((c - b * HEIGHT) / a);
 
-		if (n >= 0.0f && n <= WIDTH)
+		if (n >= 0.0f && n <= WIDTH && isOtherSiteFar(originSite, otherSite, n, HEIGHT))
 		{
+			wasVertexAdded = true;
 			sf::Vector2f* vertex = new sf::Vector2f(n, HEIGHT);
 			vertexIds.emplace(vertexId);
 			voronoiVertices.emplace(vertex);
-			siteVertexSets.at(edge->origin)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->origin->y, vertex->x - edge->origin->x)));
-			siteVertexSets.at(edge->destination)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->destination->y, vertex->x - edge->destination->x)));
+			siteVertexSets.at(originSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - originSite->y, vertex->x - originSite->x)));
+			siteVertexSets.at(destinationSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - destinationSite->y, vertex->x - destinationSite->x)));
 		}
 	}
 
 	//check S wall
-	if (y <= v)
+	if ((y <= circumcenter->y && !shouldExtendTowardCircumcenter) || (y >= circumcenter->y && shouldExtendTowardCircumcenter))
 	{
 		float n = (a == 0) ? (-1) : (c / a);
 
-		if (n >= 0.0f && n <= WIDTH)
+		if (n >= 0.0f && n <= WIDTH && isOtherSiteFar(originSite, otherSite, n, 0.0f))
 		{
+			wasVertexAdded = true;
 			sf::Vector2f* vertex = new sf::Vector2f(n, 0.0f);
 			vertexIds.emplace(vertexId);
 			voronoiVertices.emplace(vertex);
-			siteVertexSets.at(edge->origin)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->origin->y, vertex->x - edge->origin->x)));
-			siteVertexSets.at(edge->destination)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->destination->y, vertex->x - edge->destination->x)));
+			siteVertexSets.at(originSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - originSite->y, vertex->x - originSite->x)));
+			siteVertexSets.at(destinationSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - destinationSite->y, vertex->x - destinationSite->x)));
 		}
 	}
 
 	//check E wall
-	if (x >= u)
+	if ((x >= circumcenter->x && !shouldExtendTowardCircumcenter) || (x <= circumcenter->x && shouldExtendTowardCircumcenter))
 	{
 		float n = (b == 0) ? (-1) : ((c - a * WIDTH) / b);
 
-		if (n >= 0.0f && n <= HEIGHT)
+		if (n >= 0.0f && n <= HEIGHT && isOtherSiteFar(originSite, otherSite, WIDTH, n))
 		{
+			wasVertexAdded = true;
 			sf::Vector2f* vertex = new sf::Vector2f(WIDTH, n);
 			vertexIds.emplace(vertexId);
 			voronoiVertices.emplace(vertex);
-			siteVertexSets.at(edge->origin)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->origin->y, vertex->x - edge->origin->x)));
-			siteVertexSets.at(edge->destination)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->destination->y, vertex->x - edge->destination->x)));
+			siteVertexSets.at(originSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - originSite->y, vertex->x - originSite->x)));
+			siteVertexSets.at(destinationSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - destinationSite->y, vertex->x - destinationSite->x)));
 		}
 	}
 
 	//check W wall
-	if (x <= u)
+	if ((x <= circumcenter->x && !shouldExtendTowardCircumcenter) || (x >= circumcenter->x && shouldExtendTowardCircumcenter))
 	{
 		float n = (b == 0) ? (-1) : (c / b);
 
-		if (n >= 0.0f && n <= HEIGHT)
+		if (n >= 0.0f && n <= HEIGHT && isOtherSiteFar(originSite, otherSite, 0.0f, n))
 		{
+			wasVertexAdded = true;
 			sf::Vector2f* vertex = new sf::Vector2f(0.0f, n);
 			vertexIds.emplace(vertexId);
 			voronoiVertices.emplace(vertex);
-			siteVertexSets.at(edge->origin)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->origin->y, vertex->x - edge->origin->x)));
-			siteVertexSets.at(edge->destination)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edge->destination->y, vertex->x - edge->destination->x)));
+			siteVertexSets.at(originSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - originSite->y, vertex->x - originSite->x)));
+			siteVertexSets.at(destinationSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - destinationSite->y, vertex->x - destinationSite->x)));
 		}
 	}
+
+	return wasVertexAdded;
 }
 
 //find and return circumcenter of triangle abc (intersection point of perpendicular bisectors of 2 edges)
@@ -792,7 +806,9 @@ sf::ConvexShape* Delaunay::createVoronoiCell(sf::Vector2f* site, std::unordered_
 		Edge* nextEdge = (isSiteEdgeOrigin) ? (edge->ccwAroundOrigin) : (edge->ccwAroundDestination);
 		bool isSiteNextEdgeOrigin = nextEdge->origin == site;
 		bool shouldMake2Vertices = false;
+		bool shouldExtendTowardCircumcenter = false;
 		sf::Vector2f* nextEdgeSite = (isSiteNextEdgeOrigin) ? (nextEdge->destination) : (nextEdge->origin);
+		sf::Vector2f* circumcenter = nullptr;
 
 		//create cell vertex
 		if (getOrientation(nextEdgeSite, edgeSite, site) < 0)
@@ -803,22 +819,31 @@ sf::ConvexShape* Delaunay::createVoronoiCell(sf::Vector2f* site, std::unordered_
 			//make sure vertex wasn't already created
 			if (!vertexIds.count(vertexId))
 			{
-				sf::Vector2f* vertex = getCircumcenter(site, edgeSite, nextEdgeSite);
+				circumcenter = getCircumcenter(site, edgeSite, nextEdgeSite);
 
-				if (vertex->x < 0.0f || vertex->x > WIDTH || vertex->y < 0.0f || vertex->y > HEIGHT)
+				if (circumcenter->x < 0.0f || circumcenter->x > WIDTH || circumcenter->y < 0.0f || circumcenter->y > HEIGHT)
 				{
 					//vertex is out of bounds
 					shouldMake2Vertices = true;
-					delete vertex;
+					shouldExtendTowardCircumcenter = true;
 				}
 				else
 				{
 					//vertex is in bounds
+					Territory* territory1 = voronoiCells.at(siteIndices.at(site) - 1);
+					Territory* territory2 = voronoiCells.at(siteIndices.at(edgeSite) - 1);
+					Territory* territory3 = voronoiCells.at(siteIndices.at(nextEdgeSite) - 1);
+					territory1->addNeighbor(territory2);
+					territory1->addNeighbor(territory3);
+					territory2->addNeighbor(territory1);
+					territory2->addNeighbor(territory3);
+					territory3->addNeighbor(territory1);
+					territory3->addNeighbor(territory2);
 					vertexIds.emplace(vertexId);
-					voronoiVertices.emplace(vertex);
-					siteVertexSets.at(site)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - site->y, vertex->x - site->x)));
-					siteVertexSets.at(edgeSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - edgeSite->y, vertex->x - edgeSite->x)));
-					siteVertexSets.at(nextEdgeSite)->push_back(new std::pair<sf::Vector2f*, float>(vertex, atan2f(vertex->y - nextEdgeSite->y, vertex->x - nextEdgeSite->x)));
+					voronoiVertices.emplace(circumcenter);
+					siteVertexSets.at(site)->push_back(new std::pair<sf::Vector2f*, float>(circumcenter, atan2f(circumcenter->y - site->y, circumcenter->x - site->x)));
+					siteVertexSets.at(edgeSite)->push_back(new std::pair<sf::Vector2f*, float>(circumcenter, atan2f(circumcenter->y - edgeSite->y, circumcenter->x - edgeSite->x)));
+					siteVertexSets.at(nextEdgeSite)->push_back(new std::pair<sf::Vector2f*, float>(circumcenter, atan2f(circumcenter->y - nextEdgeSite->y, circumcenter->x - nextEdgeSite->x)));
 				}
 			}
 		}
@@ -833,18 +858,43 @@ sf::ConvexShape* Delaunay::createVoronoiCell(sf::Vector2f* site, std::unordered_
 			//both edges form vertices with outer walls
 			int vertex1Id = getVertexId(siteIndices, edgeSite, site);
 			int vertex2Id = getVertexId(siteIndices, nextEdgeSite, site);
+			circumcenter = (circumcenter) ? (circumcenter) : (getCircumcenter(site, edgeSite, nextEdgeSite));
 
 			//make sure vertex wasn't already created
 			if (!vertexIds.count(vertex1Id))
 			{
-				addClipVertex(edge, nextEdgeSite, vertex1Id, siteVertexSets, vertexIds);
+				if (addClipVertex(site, edgeSite, nextEdgeSite, circumcenter, shouldExtendTowardCircumcenter, vertex1Id, siteVertexSets, vertexIds))
+				{
+					Territory* territory1 = voronoiCells.at(siteIndices.at(site) - 1);
+					Territory* territory2 = voronoiCells.at(siteIndices.at(edgeSite) - 1);
+					territory1->addNeighbor(territory2);
+					territory2->addNeighbor(territory1);
+				}
+				else
+				{
+					//vertex should not be added if it was rejected
+					vertexIds.emplace(vertex1Id);
+				}
 			}
 
 			//make sure vertex wasn't already created
 			if (!vertexIds.count(vertex2Id))
 			{
-				addClipVertex(nextEdge, edgeSite, vertex2Id, siteVertexSets, vertexIds);
+				if (addClipVertex(site, nextEdgeSite, edgeSite, circumcenter, shouldExtendTowardCircumcenter, vertex2Id, siteVertexSets, vertexIds))
+				{
+					Territory* territory1 = voronoiCells.at(siteIndices.at(site) - 1);
+					Territory* territory2 = voronoiCells.at(siteIndices.at(nextEdgeSite) - 1);
+					territory1->addNeighbor(territory2);
+					territory2->addNeighbor(territory1);
+				}
+				else
+				{
+					//vertex should not be added if it was rejected
+					vertexIds.emplace(vertex2Id);
+				}
 			}
+
+			delete circumcenter;
 		}
 
 		edge = nextEdge;

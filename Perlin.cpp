@@ -9,7 +9,18 @@
 Perlin::Perlin()
 {
 	//get seed from time
-	Perlin((unsigned int)std::chrono::system_clock::now().time_since_epoch().count());
+	unsigned int seed = (unsigned int)std::chrono::system_clock::now().time_since_epoch().count();
+
+	//fill permutation with 0 to 255
+	permutation.resize(256);
+	std::iota(permutation.begin(), permutation.end(), 0);
+
+	//permute
+	std::default_random_engine engine(seed);
+	std::shuffle(permutation.begin(), permutation.end(), engine);
+
+	//duplicate all values and place at end
+	permutation.insert(permutation.end(), permutation.begin(), permutation.end());
 }
 
 Perlin::Perlin(unsigned int seed)

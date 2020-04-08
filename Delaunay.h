@@ -1,11 +1,9 @@
 #pragma once
 
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
-#include "SFML/System/Vector2.hpp"
-#include "SFML/Graphics/ConvexShape.hpp"
+#include "Territory.h"
 
 //REFERENCES:
 //http://www.geom.uiuc.edu/~samuelp/del_project.html
@@ -18,7 +16,7 @@ public:
 	Delaunay(std::vector<sf::Vector2f*> siteList, float width = 1024.0f, float height = 2048.0f);
 	~Delaunay();
 
-	const std::vector<sf::ConvexShape*>& getVoronoiCells();
+	std::vector<Territory*>& getVoronoiCells();
 
 private:
 	struct Edge
@@ -38,7 +36,7 @@ private:
 
 	std::vector<sf::Vector2f*> sites;
 	std::unordered_set<Edge*> edges;
-	std::vector<sf::ConvexShape*> voronoiCells;
+	std::vector<Territory*> voronoiCells;
 	std::unordered_set<sf::Vector2f*> voronoiVertices;
 
 	static bool compareVector2fPtr(sf::Vector2f* a, sf::Vector2f* b);
@@ -59,7 +57,8 @@ private:
 	Edge* reverseEdge(Edge* edge);
 	void removeEdge(Edge* edge);
 	void createVoronoiCells();
-	void addClipVertex(Edge* edge, sf::Vector2f* otherSite, int vertexId, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds);
+	bool isOtherSiteFar(sf::Vector2f* site, sf::Vector2f* otherSite, float x, float y);
+	bool addClipVertex(sf::Vector2f* originSite, sf::Vector2f* destinationSite, sf::Vector2f* otherSite, sf::Vector2f* circumcenter, bool shouldExtendTowardCircumcenter, int vertexId, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds);
 	sf::Vector2f* getCircumcenter(sf::Vector2f* siteA, sf::Vector2f* siteB, sf::Vector2f* siteC);
 	sf::ConvexShape* createVoronoiCell(sf::Vector2f* site, std::unordered_map<sf::Vector2f*, int>& siteIndices, std::unordered_map<sf::Vector2f*, Edge*>& siteEdges, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds);
 	int getVertexId(std::unordered_map<sf::Vector2f*, int>& siteIndices, sf::Vector2f* siteA, sf::Vector2f* siteB, sf::Vector2f* siteC);

@@ -1,6 +1,6 @@
-#include "Delaunay.h"
+#include "MapGenerator.h"
 
 int main()
 {
-	Delaunay d({new sf::Vector2f(2.0f, 3.0f), new sf::Vector2f(4.0f, 3.0f), new sf::Vector2f(2.0f, 1.0f), new sf::Vector2f(4.0f, 1.0f), new sf::Vector2f(3.0f, 2.0f)});
+	MapGenerator mg(10, 5, 2048.f, 1024.0f);
 }
