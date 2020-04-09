@@ -23,6 +23,12 @@ void Territory::addNeighbor(Territory* neighbor)
 	neighbors.emplace(neighbor);
 }
 
+void Territory::addDistantNeighbor(Territory* neighbor)
+{
+	distantNeighbors.emplace(neighbor);
+	neighbors.emplace(neighbor);
+}
+
 void Territory::removeNeighbor(Territory* neighbor)
 {
 	neighbors.erase(neighbor);

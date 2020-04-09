@@ -16,4 +16,8 @@ private:
 	std::unordered_set<Territory*> territories;
 
 	static bool compareTerritoryPtr(Territory* a, Territory* b);
+
+	void removeUnwantedTerritories(int numTerritories, std::unordered_set<Territory*>& disconnectedTerritories);
+	void reconnectMap(std::unordered_set<Territory*>& disconnectedTerritories);
+	std::pair<Territory*, Territory*> getNewTerritoryConnection(Territory* territory, std::unordered_set<Territory*>& disconnectedTerritories);
 };

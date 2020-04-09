@@ -17,6 +17,7 @@ public:
 	void setShape(sf::ConvexShape* shape);
 	void setHeight(double height);
 	void addNeighbor(Territory* neighbor);
+	void addDistantNeighbor(Territory* neighbor);
 	void removeNeighbor(Territory* neighbor);
 	double getHeight();
 	std::unordered_set<Territory*>& getNeighbors();
@@ -25,5 +26,6 @@ public:
 private:
 	sf::ConvexShape* shape;
 	std::unordered_set<Territory*> neighbors;
+	std::unordered_set<Territory*> distantNeighbors;
 	double height;
 };
