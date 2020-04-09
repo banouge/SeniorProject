@@ -48,7 +48,7 @@ private:
 	std::pair<Edge*, Edge*> triangulate3(int firstSiteIndex, int lastSiteIndex);
 	std::pair<Edge*, Edge*> triangulate2(int firstSiteIndex, int lastSiteIndex);
 	std::pair<Edge*, Edge*> merge(std::pair<Edge*, Edge*> leftEdges, std::pair<Edge*, Edge*> rightEdges);
-	Edge* createBottomEdge(std::pair<Edge*, Edge*> leftEdges, std::pair<Edge*, Edge*> rightEdges);
+	Edge* createBottomEdge(std::pair<Edge*, Edge*>& leftEdges, std::pair<Edge*, Edge*>& rightEdges);
 	Edge* getLeftCandidate(Edge* baseEdge);
 	Edge* getRightCandidate(Edge* baseEdge);
 	Edge* addEdgeUsingLeftCandidate(Edge* baseEdge, Edge* candidateEdge, sf::Vector2f* endpoint);

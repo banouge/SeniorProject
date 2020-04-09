@@ -3,7 +3,7 @@
 #include <sstream>
 #include "MapGenerator.h"
 
-MapGenerator::MapGenerator(int numCells, int numTerritories, int numRegions, float width, float height): noise(Perlin()), delaunay(Delaunay({new sf::Vector2f(103.842392,494.779510),new sf::Vector2f(165.291687,872.400146),new sf::Vector2f(200.237061,321.416565) ,new sf::Vector2f(335.767578,822.446960) ,new sf::Vector2f(495.841187,966.925537) ,new sf::Vector2f(1038.48242,171.301941) ,new sf::Vector2f(1071.38623,735.666382) ,new sf::Vector2f(1379.79834,422.512054) ,new sf::Vector2f(1549.10046,217.614532) ,new sf::Vector2f(1676.82556,975.670715) }, width, height)) //FIXME
+MapGenerator::MapGenerator(int numCells, int numTerritories, int numRegions, float width, float height): noise(Perlin()), delaunay(Delaunay(numCells, width, height))
 {
 	std::unordered_set<Territory*> disconnectedTerritories;
 	std::unordered_set<Territory*> regionSeeds;

@@ -313,25 +313,93 @@ std::pair<Delaunay::Edge*, Delaunay::Edge*> Delaunay::merge(std::pair<Edge*, Edg
 	}
 
 	//reverse top edge to keep outer edges clockwise
-	bool isBottomBase = bottomEdge == baseEdge;
-	baseEdge = reverseEdge(baseEdge);
-	bottomEdge = (isBottomBase) ? (baseEdge) : (bottomEdge);
+	reverseEdge(baseEdge);
 
 	//return edges on left and right of bottom vertex
 	bool isRightLower = bottomEdge->origin->y < bottomEdge->destination->y;
 	return (isRightLower) ? (std::pair<Edge*, Edge*>(bottomEdge, rightEdges.second)) : (std::pair<Edge*, Edge*>(leftEdges.first, bottomEdge));
 }
 
-Delaunay::Edge* Delaunay::createBottomEdge(std::pair<Edge*, Edge*> leftEdges, std::pair<Edge*, Edge*> rightEdges)
+Delaunay::Edge* Delaunay::createBottomEdge(std::pair<Edge*, Edge*>& leftEdges, std::pair<Edge*, Edge*>& rightEdges)
 {
-	//make base edge from bottom vertices of each side
-	Edge* baseEdge = new Edge(rightEdges.first->origin, leftEdges.first->origin, rightEdges.second, rightEdges.first, leftEdges.second, leftEdges.first);
+	bool areVerticesExtreme = false;
+
+	//find extreme vertices (all vertices should be on one side of the resulting edge)
+	while (!areVerticesExtreme)
+	{
+		areVerticesExtreme = true;
+
+		//shift to vertex that is on the wrong side (eventually all will be on right side)
+		if (getOrientation(leftEdges.first->origin, rightEdges.second->destination, leftEdges.first->destination) < 0)
+		{
+			areVerticesExtreme = false;
+			
+			if (leftEdges.first == leftEdges.second)
+			{
+				leftEdges.first = reverseEdge(leftEdges.first);
+				leftEdges.second = leftEdges.first;
+			}
+			else
+			{
+				leftEdges.second = leftEdges.first;
+				leftEdges.first = leftEdges.first->cwAroundDestination;
+			}
+		}
+		else if (getOrientation(leftEdges.first->origin, rightEdges.second->destination, leftEdges.second->origin) < 0)
+		{
+			areVerticesExtreme = false;
+			
+			if (leftEdges.first == leftEdges.second)
+			{
+				leftEdges.first = reverseEdge(leftEdges.first);
+				leftEdges.second = leftEdges.first;
+			}
+			else
+			{
+				leftEdges.first = leftEdges.second;
+				leftEdges.second = leftEdges.second->ccwAroundOrigin;
+			}
+		}
+		else if (getOrientation(leftEdges.first->origin, rightEdges.second->destination, rightEdges.first->destination) < 0)
+		{
+			areVerticesExtreme = false;
+			
+			if (rightEdges.first == rightEdges.second)
+			{
+				rightEdges.first = reverseEdge(rightEdges.first);
+				rightEdges.second = rightEdges.first;
+			}
+			else
+			{
+				rightEdges.second = rightEdges.first;
+				rightEdges.first = rightEdges.first->cwAroundDestination;
+			}
+		}
+		else if (getOrientation(leftEdges.first->origin, rightEdges.second->destination, rightEdges.second->origin) < 0)
+		{
+			areVerticesExtreme = false;
+			
+			if (rightEdges.first == rightEdges.second)
+			{
+				rightEdges.first = reverseEdge(rightEdges.first);
+				rightEdges.second = rightEdges.first;
+			}
+			else
+			{
+				rightEdges.first = rightEdges.second;
+				rightEdges.second = rightEdges.second->ccwAroundOrigin;
+			}
+		}
+	}
+
+	//make base edge from extreme vertices of each side
+	Edge* baseEdge = new Edge(rightEdges.second->destination, leftEdges.first->origin, rightEdges.second, rightEdges.first, leftEdges.second, leftEdges.first);
 	edges.emplace(baseEdge);
 
 	//add base edge as neighbor of left edges
 	if (leftEdges.first == leftEdges.second)
 	{
-		//upward edge from triangulate2, base edge only touches origin
+		//base edge only touches origin
 		leftEdges.first->ccwAroundOrigin = baseEdge;
 		leftEdges.first->cwAroundOrigin = baseEdge;
 	}
@@ -344,9 +412,9 @@ Delaunay::Edge* Delaunay::createBottomEdge(std::pair<Edge*, Edge*> leftEdges, st
 	//add base edge as neighbor of right edges
 	if (rightEdges.first == rightEdges.second)
 	{
-		//upward edge from triangulate2, base edge only touches origin
-		rightEdges.first->ccwAroundOrigin = baseEdge;
-		rightEdges.first->cwAroundOrigin = baseEdge;
+		//base edge only touches destination
+		rightEdges.second->ccwAroundDestination = baseEdge;
+		rightEdges.second->cwAroundDestination = baseEdge;
 	}
 	else
 	{
@@ -537,7 +605,11 @@ Delaunay::Edge* Delaunay::replaceEdge(Edge* edge, bool isReverse)
 
 	if (isReverse)
 	{
-		reverse = new Edge(edge->destination, edge->origin, edge->ccwAroundDestination, edge->cwAroundDestination, edge->ccwAroundOrigin, edge->cwAroundOrigin);
+		reverse = new Edge(edge->destination, edge->origin);
+		reverse->ccwAroundOrigin = (edge == edge->ccwAroundDestination) ? (reverse) : (edge->ccwAroundDestination);
+		reverse->cwAroundOrigin = (edge == edge->cwAroundDestination) ? (reverse) : (edge->cwAroundDestination);
+		reverse->ccwAroundDestination = (edge == edge->ccwAroundOrigin) ? (reverse) : (edge->ccwAroundOrigin);
+		reverse->cwAroundDestination = (edge == edge->cwAroundOrigin) ? (reverse) : (edge->cwAroundOrigin);
 		edges.emplace(reverse);
 	}
 
