@@ -6,6 +6,10 @@ Territory::Territory(std::string name, sf::Vector2f* position): POSITION(positio
 	this->name = name;
 	region = nullptr;
 	owner = nullptr;
+	numArmies = 0;
+	numExhaustedArmies = 0;
+	doesHaveGeneral = false;
+	hasExhaustedGeneral = false;
 }
 
 Territory::~Territory()
@@ -33,14 +37,35 @@ void Territory::setRegion(Region* region)
 	this->region = region;
 }
 
-void Territory::setNumArmies(int numArmies)
+void Territory::setTotalArmies(int totalArmies)
 {
-	this->numArmies = numArmies;
+	int delta = totalArmies - numArmies - numExhaustedArmies;
+
+	if (delta >= 0)
+	{
+		numExhaustedArmies += delta;
+	}
+	else if (numExhaustedArmies + delta >= 0)
+	{
+		numExhaustedArmies += delta;
+	}
+	else
+	{
+		numExhaustedArmies = 0;
+		numArmies = totalArmies;
+	}
 }
 
-void Territory::setHasGeneral(bool doesHaveGeneral)
+void Territory::addGeneral()
 {
-	this->doesHaveGeneral = doesHaveGeneral;
+	doesHaveGeneral = true;
+	hasExhaustedGeneral = true;
+}
+
+void Territory::removeGeneral()
+{
+	doesHaveGeneral = false;
+	hasExhaustedGeneral = false;
 }
 
 void Territory::setOwner(Player* owner)
@@ -62,6 +87,49 @@ void Territory::addDistantNeighbor(Territory* neighbor)
 {
 	distantNeighbors.emplace(neighbor);
 	neighbors.emplace(neighbor);
+}
+
+void Territory::addArmies(int numNewArmies)
+{
+	numExhaustedArmies += numNewArmies;
+}
+
+void Territory::removeArmies(int numLostArmies, bool shouldExhaustedBeRemovedFirst)
+{
+	if (shouldExhaustedBeRemovedFirst)
+	{
+		if (numExhaustedArmies >= numLostArmies)
+		{
+			numExhaustedArmies -= numLostArmies;
+		}
+		else if (numArmies + numExhaustedArmies >= numLostArmies)
+		{
+			numArmies += numExhaustedArmies - numLostArmies;
+			numExhaustedArmies = 0;
+		}
+		else
+		{
+			numArmies = 0;
+			numExhaustedArmies = 0;
+		}
+	}
+	else
+	{
+		if (numArmies >= numLostArmies)
+		{
+			numArmies -= numLostArmies;
+		}
+		else if (numArmies + numExhaustedArmies >= numLostArmies)
+		{
+			numExhaustedArmies += numArmies - numLostArmies;
+			numArmies = 0;
+		}
+		else
+		{
+			numArmies = 0;
+			numExhaustedArmies = 0;
+		}
+	}
 }
 
 void Territory::removeNeighbor(Territory* neighbor)
@@ -96,6 +164,14 @@ void Territory::writeToOutput(std::ostream& output)
 	}
 }
 
+void Territory::rejuvenateArmies()
+{
+	numArmies += numExhaustedArmies;
+	numExhaustedArmies = 0;
+	doesHaveGeneral = hasExhaustedGeneral || doesHaveGeneral;
+	hasExhaustedGeneral = false;
+}
+
 double Territory::getHeight()
 {
 	return height;
@@ -126,6 +202,11 @@ int Territory::getNumArmies()
 	return numArmies;
 }
 
+int Territory::getTotalArmies()
+{
+	return numArmies + numExhaustedArmies;
+}
+
 Player* Territory::getOwner()
 {
 	return owner;
@@ -134,4 +215,9 @@ Player* Territory::getOwner()
 bool Territory::hasGeneral()
 {
 	return doesHaveGeneral;
+}
+
+bool Territory::isGeneralExhausted()
+{
+	return hasExhaustedGeneral;
 }

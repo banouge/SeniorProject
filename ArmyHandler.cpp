@@ -6,6 +6,8 @@ std::normal_distribution<double> ArmyHandler::normalDistribution = std::normal_d
 std::uniform_real_distribution<double> ArmyHandler::uniformDistribution = std::uniform_real_distribution<double>(0.0, 1.0);
 std::random_device ArmyHandler::seed;
 int ArmyHandler::generalValue = 10;
+int ArmyHandler::offensiveKillRate = 60;
+int ArmyHandler::defensiveKillRate = 70;
 std::mt19937 ArmyHandler::rng(seed());
 
 ArmyHandler::ArmyHandler()
@@ -27,6 +29,11 @@ void ArmyHandler::setGeneralValue(int value)
 	generalValue = value;
 }
 
+int ArmyHandler::getGeneralValue()
+{
+	return generalValue;
+}
+
 int ArmyHandler::getNumArmiesKilled(int numEnemies, int killRate, bool hasGeneral)
 {
 	//get mean
@@ -40,6 +47,16 @@ int ArmyHandler::getNumArmiesKilled(int numEnemies, int killRate, bool hasGenera
 
 	//round
 	return (isWeightedRound) ? (weightedRound(numArmies)) : ((int)round(numArmies));
+}
+
+int ArmyHandler::getNumAttackersKilled(int numDefenders, bool doDefendersHaveGeneral)
+{
+	return getNumArmiesKilled(numDefenders, defensiveKillRate, doDefendersHaveGeneral);
+}
+
+int ArmyHandler::getNumDefendersKilled(int numAttackers, bool doAttackersHaveGeneral)
+{
+	return getNumArmiesKilled(numAttackers, offensiveKillRate, doAttackersHaveGeneral);
 }
 
 int ArmyHandler::weightedRound(double x)
