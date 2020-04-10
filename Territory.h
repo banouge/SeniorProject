@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include "SFML/Graphics/ConvexShape.hpp"
 #include "SFML/System/Vector2.hpp"
+#include "Player.h"
 
 class Region;
 
@@ -20,6 +21,9 @@ public:
 	void setShape(sf::ConvexShape* shape);
 	void setHeight(double height);
 	void setRegion(Region* region);
+	void setNumArmies(int numArmies);
+	void setHasGeneral(bool doesHaveGeneral);
+	void setOwner(Player* owner);
 	void addNeighbor(Territory* neighbor);
 	void addDistantNeighbor(Territory* neighbor);
 	void removeNeighbor(Territory* neighbor);
@@ -29,6 +33,9 @@ public:
 	std::unordered_set<Territory*>& getNeighbors();
 	std::string getName();
 	sf::ConvexShape* getShape();
+	int getNumArmies();
+	Player* getOwner();
+	bool hasGeneral();
 
 private:
 	std::string name;
@@ -37,24 +44,7 @@ private:
 	std::unordered_set<Territory*> distantNeighbors;
 	Region* region;
 	double height;
-};
-
-class Region
-{
-public:
-	Region(std::string name, int value = -1);
-	~Region();
-
-	const std::string NAME;
-
-	void setValue(int value);
-	void addTerritory(Territory* territory);
-	void removeTerritory(Territory* territory);
-	void writeToOutput(std::ostream& output);
-	int getValue();
-	std::unordered_set<Territory*>& getTerritories();
-
-private:
-	int value;
-	std::unordered_set<Territory*> territories;
+	int numArmies;
+	bool doesHaveGeneral;
+	Player* owner;
 };

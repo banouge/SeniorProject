@@ -3,6 +3,7 @@
 #include "Delaunay.h"
 #include "Map.h"
 #include "Perlin.h"
+#include "Region.h"
 
 class MapGenerator
 {

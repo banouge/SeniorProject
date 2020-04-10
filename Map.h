@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <unordered_map>
+#include "Region.h"
 #include "Territory.h"
 
 class Map

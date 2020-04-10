@@ -1,8 +1,11 @@
+#include "Region.h"
 #include "Territory.h"
 
 Territory::Territory(std::string name, sf::Vector2f* position): POSITION(position)
 {
 	this->name = name;
+	region = nullptr;
+	owner = nullptr;
 }
 
 Territory::~Territory()
@@ -28,6 +31,26 @@ void Territory::setHeight(double height)
 void Territory::setRegion(Region* region)
 {
 	this->region = region;
+}
+
+void Territory::setNumArmies(int numArmies)
+{
+	this->numArmies = numArmies;
+}
+
+void Territory::setHasGeneral(bool doesHaveGeneral)
+{
+	this->doesHaveGeneral = doesHaveGeneral;
+}
+
+void Territory::setOwner(Player* owner)
+{
+	this->owner = owner;
+
+	if (region)
+	{
+		region->updateOwner(owner);
+	}
 }
 
 void Territory::addNeighbor(Territory* neighbor)
@@ -98,48 +121,17 @@ sf::ConvexShape* Territory::getShape()
 	return shape;
 }
 
-Region::Region(std::string name, int value): NAME(name)
+int Territory::getNumArmies()
 {
-	this->value = value;
+	return numArmies;
 }
 
-Region::~Region()
+Player* Territory::getOwner()
 {
+	return owner;
 }
 
-void Region::setValue(int value)
+bool Territory::hasGeneral()
 {
-	this->value = value;
-}
-
-void Region::addTerritory(Territory* territory)
-{
-	territories.emplace(territory);
-}
-
-void Region::removeTerritory(Territory* territory)
-{
-	territories.erase(territory);
-}
-
-void Region::writeToOutput(std::ostream& output)
-{
-	output << "NAME: " << NAME << '\n';
-	output << "VALUE: " << std::to_string(value) << '\n';
-	output << "NUMBER OF TERRITORIES: " << std::to_string(territories.size()) << '\n';
-
-	for (Territory* territory : territories)
-	{
-		output << territory->getName() << '\n';
-	}
-}
-
-int Region::getValue()
-{
-	return value;
-}
-
-std::unordered_set<Territory*>& Region::getTerritories()
-{
-	return territories;
+	return doesHaveGeneral;
 }

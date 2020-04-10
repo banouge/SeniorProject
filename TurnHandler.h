@@ -2,12 +2,12 @@
 
 #include "Command.h"
 
-class TurnHandler;
+class Player;
 
-class Player
+class TurnHandler
 {
 public:
-	
+
 private:
 
 };

@@ -5,6 +5,7 @@ double ArmyHandler::luckRate = 0.0;
 std::normal_distribution<double> ArmyHandler::normalDistribution = std::normal_distribution<double>(0.0, 1.0);
 std::uniform_real_distribution<double> ArmyHandler::uniformDistribution = std::uniform_real_distribution<double>(0.0, 1.0);
 std::random_device ArmyHandler::seed;
+int ArmyHandler::generalValue = 10;
 std::mt19937 ArmyHandler::rng(seed());
 
 ArmyHandler::ArmyHandler()
@@ -21,10 +22,15 @@ void ArmyHandler::setLuckRate(int luckFactor)
 	luckRate = luckFactor / 100.0;
 }
 
-int ArmyHandler::getNumArmiesKilled(int numEnemies, int killRate)
+void ArmyHandler::setGeneralValue(int value)
+{
+	generalValue = value;
+}
+
+int ArmyHandler::getNumArmiesKilled(int numEnemies, int killRate, bool hasGeneral)
 {
 	//get mean
-	double numArmies = numEnemies * killRate / 100.0;
+	double numArmies = (hasGeneral) ? ((numEnemies + generalValue) * killRate / 100.0) : (numEnemies * killRate / 100.0);
 
 	//add offset
 	numArmies += numArmies * luckRate * normalDistribution(rng);

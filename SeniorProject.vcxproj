@@ -125,21 +125,29 @@
   <ItemGroup>
     <ClCompile Include="ArmyHandler.cpp" />
     <ClCompile Include="Bitmap.cpp" />
+    <ClCompile Include="Command.cpp" />
     <ClCompile Include="Delaunay.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MapGenerator.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="Perlin.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Region.cpp" />
     <ClCompile Include="Territory.cpp" />
+    <ClCompile Include="TurnHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArmyHandler.h" />
     <ClInclude Include="Bitmap.h" />
+    <ClInclude Include="Command.h" />
     <ClInclude Include="Delaunay.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="MapGenerator.h" />
     <ClInclude Include="Perlin.h" />
+    <ClInclude Include="Player.h" />
+    <ClInclude Include="Region.h" />
     <ClInclude Include="Territory.h" />
+    <ClInclude Include="TurnHandler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
