@@ -1,9 +1,10 @@
 #include <algorithm>
+#include <fstream>
 #include <queue>
 #include <sstream>
 #include "MapGenerator.h"
 
-MapGenerator::MapGenerator(int numCells, int numTerritories, int numRegions, float width, float height): noise(Perlin()), delaunay(Delaunay(numCells, width, height))
+MapGenerator::MapGenerator(int numCells, int numTerritories, int numRegions, float width, float height, std::string name): noise(Perlin()), delaunay(Delaunay(numCells, width, height))
 {
 	std::unordered_set<Territory*> disconnectedTerritories;
 	std::unordered_set<Territory*> regionSeeds;
@@ -11,7 +12,7 @@ MapGenerator::MapGenerator(int numCells, int numTerritories, int numRegions, flo
 	removeUnwantedTerritories((numTerritories > numCells) ? (numCells) : (numTerritories), disconnectedTerritories);
 	reconnectMap(disconnectedTerritories, regionSeeds);
 	createRegions((numRegions > territories.size()) ? (territories.size()) : (numRegions), regionSeeds);
-	outputData();
+	outputData(name);
 }
 
 MapGenerator::~MapGenerator()
@@ -44,22 +45,39 @@ std::string MapGenerator::convertNumberToLetters(int number)
 	return string;
 }
 
-void MapGenerator::outputData()
+void MapGenerator::outputData(std::string name)
 {
-	//TODO: use file instead of cout
-	std::cout << "NUMBER OF TERRITORIES: " << std::to_string(territories.size()) << '\n';
+	std::ofstream mapFile("Maps/" + name + ".txt");
+	std::fstream mapsList("Maps.txt");
+	std::string line;
+
+	mapFile << "NUMBER OF TERRITORIES: " << std::to_string(territories.size()) << '\n';
 
 	for (Territory* territory : territories)
 	{
-		territory->writeToOutput(std::cout);
+		territory->writeToOutput(mapFile);
 	}
 
-	std::cout << "NUMBER OF REGIONS: " << std::to_string(regions.size()) << '\n';
+	mapFile << "NUMBER OF REGIONS: " << std::to_string(regions.size()) << '\n';
 
 	for (Region* region : regions)
 	{
-		region->writeToOutput(std::cout);
+		region->writeToOutput(mapFile);
 	}
+
+	//check if name is already in list
+	while (std::getline(mapsList, line))
+	{
+		if (line == name)
+		{
+			return;
+		}
+	}
+
+	//put name in list if it's not there already
+	mapsList.clear();
+	mapsList.seekp(0, std::ios_base::end);
+	mapsList << name << '\n';
 }
 
 void MapGenerator::createRegions(int numRegions, std::unordered_set<Territory*>& regionSeeds)

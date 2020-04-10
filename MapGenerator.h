@@ -7,7 +7,7 @@
 class MapGenerator
 {
 public:
-	MapGenerator(int numCells, int numTerritories, int numRegions, float width, float height);
+	MapGenerator(int numCells, int numTerritories, int numRegions, float width, float height, std::string name);
 	~MapGenerator();
 
 private:
@@ -19,7 +19,7 @@ private:
 	static bool compareTerritoryPtr(Territory* a, Territory* b);
 	static std::string convertNumberToLetters(int number);
 
-	void outputData();
+	void outputData(std::string name);
 	void createRegions(int numRegions, std::unordered_set<Territory*>& regionSeeds);
 	void expandRegions();
 	void removeUnwantedTerritories(int numTerritories, std::unordered_set<Territory*>& disconnectedTerritories);
