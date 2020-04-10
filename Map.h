@@ -7,8 +7,6 @@
 class Map
 {
 public:
-
-private:
 	Map(std::string name = "");
 	~Map();
 
