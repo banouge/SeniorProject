@@ -7,6 +7,7 @@ Territory::Territory(std::string name, sf::Vector2f* position): POSITION(positio
 
 Territory::~Territory()
 {
+	delete shape;
 }
 
 void Territory::setName(std::string name)
