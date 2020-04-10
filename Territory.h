@@ -28,6 +28,7 @@ public:
 	Region* getRegion();
 	std::unordered_set<Territory*>& getNeighbors();
 	std::string getName();
+	sf::ConvexShape* getShape();
 
 private:
 	std::string name;

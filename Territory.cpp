@@ -93,6 +93,11 @@ std::string Territory::getName()
 	return name;
 }
 
+sf::ConvexShape* Territory::getShape()
+{
+	return shape;
+}
+
 Region::Region(std::string name, int value): NAME(name)
 {
 	this->value = value;
