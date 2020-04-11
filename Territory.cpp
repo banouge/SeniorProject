@@ -70,11 +70,21 @@ void Territory::removeGeneral()
 
 void Territory::setOwner(Player* owner)
 {
+	if (this->owner)
+	{
+		this->owner->removeTerritory(this);
+	}
+
 	this->owner = owner;
 
 	if (region)
 	{
 		region->updateOwner(owner);
+	}
+
+	if (owner)
+	{
+		owner->addTerritory(this);
 	}
 }
 

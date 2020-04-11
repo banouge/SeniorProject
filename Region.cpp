@@ -39,6 +39,11 @@ void Region::writeToOutput(std::ostream& output)
 
 void Region::updateOwner(Player* newOwner)
 {
+	if (!newOwner)
+	{
+		owner = nullptr;
+	}
+
 	for (Territory* territory : territories)
 	{
 		if (territory->getOwner() != newOwner)

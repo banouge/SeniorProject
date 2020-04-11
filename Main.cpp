@@ -28,6 +28,9 @@ int main()
 	p1.createMovementCommand(t1, t2, 30, true)->resolve();
 	p1.createMovementCommand(t1, t2, 10)->resolve();
 
+	t1->rejuvenateArmies();
+	p1.createAirliftCommand(t1, t2, 3)->resolve();
+
 	p1.clearCommands(true);
 	p2.clearCommands(true);
 }
