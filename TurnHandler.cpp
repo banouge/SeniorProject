@@ -27,10 +27,62 @@ void TurnHandler::submitCommands(Player* player)
 
 void TurnHandler::resolveTurn()
 {
+	std::vector<Player*> players;
+	
+	for (std::pair<Player*, std::unordered_map<int, std::queue<Command*>*>*> pair : playerMap)
+	{
+		players.push_back(pair.first);
+	}
 
+	std::sort(players.begin(), players.end(), comparePlayerPtr);
+
+	for (int b = 0; b < 10; ++b)
+	{
+		bool isForward = true;
+		bool isEmpty = true;
+
+		do
+		{
+			isForward = !isForward;
+			isEmpty = true;
+
+			for (int p = 0; p < players.size(); ++p)
+			{
+				Player* player = players.at((isForward) ? (p) : (players.size() - p - 1));
+				
+				if (playerMap.at(player)->count(b) && player->isAlive())
+				{
+					std::queue<Command*>* queue = playerMap.at(player)->at(b);
+
+					if (!queue->empty())
+					{
+						isEmpty = false;
+						queue->front()->resolve();
+						queue->pop();
+					}
+				}
+			}
+		}
+		while (!isEmpty);
+	}
+
+	for (Player* player : players)
+	{
+		if (player->hasCapturedNewTerritoryThisTurn())
+		{
+			giveCard(player);
+		}
+
+		player->clearCommands();
+	}
 }
 
 bool TurnHandler::comparePlayerPtr(Player* a, Player* b)
 {
 	return a->INDEX < b->INDEX;
+}
+
+void TurnHandler::giveCard(Player* player)
+{
+	//TODO:
 }

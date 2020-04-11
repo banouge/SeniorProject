@@ -233,10 +233,10 @@ void Player::clearCommands()
 
 	commands.clear();
 	availableArmies.clear();
+	areCommandsSubmitted = false;
 
 	for (Territory* territory : territories)
 	{
-		availableArmies.erase(territory);
 		availableArmies.emplace(territory, territory->getTotalArmies());
 		territory->rejuvenateArmies();
 	}

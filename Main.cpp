@@ -10,7 +10,7 @@ int main()
 	Territory* t3 = m.getTerritoryAtPoint(sf::Vector2i(1260, 540));
 	Territory* t4 = m.getTerritoryAtPoint(sf::Vector2i(1020, 100));
 	Player p1(1, false);
-	Player p2(0, true);
+	Player p2(2, true);
 
 	p1.setNumGenerals(1);
 	p2.setNumGenerals(1);
@@ -19,7 +19,7 @@ int main()
 	t1->setTotalArmies(30);
 	t1->addGeneral();
 	t2->setOwner(&p2);
-	t2->setTotalArmies(1);
+	t2->setTotalArmies(2);
 	t2->addGeneral();
 	t3->setOwner(&p1);
 	t3->setTotalArmies(1);
@@ -29,6 +29,7 @@ int main()
 	p1.clearCommands();
 	p2.clearCommands();
 
+	p2.createMovementCommand(t2, t4, 1);
 	p2.createMovementCommand(t2, t3, 1);
 	p2.createMovementCommand(t2, t1, 0, true);
 
@@ -43,4 +44,5 @@ int main()
 	TurnHandler::submitCommands(&p2);
 
 	TurnHandler::resolveTurn();
+	//TODO: restrict move to neighbors, restrict others based on cards, add deploy command
 }
