@@ -2,25 +2,30 @@
 #include "MovementCommand.h"
 #include "Player.h"
 
-MovementCommand::MovementCommand(Player* commander, Territory* source, Territory* destination, int numArmies, bool hasGeneral, bool canAttackTeammates, bool canAttack, bool canTransfer) : Command(commander, 6, numArmies, source), COMMANDER(commander), SOURCE(source), DESTINATION(destination), NUM_ARMIES(numArmies), HAS_GENERAL(hasGeneral), CAN_ATTACK_TEAMMATES(canAttackTeammates), CAN_ATTACK(canAttack), CAN_TRANSFER(canTransfer)
+MovementCommand::MovementCommand(Player* commander, Territory* source, Territory* destination, int numArmies, bool hasGeneral, bool canAttackTeammates, bool canAttack, bool canTransfer) : Command(commander, 5, numArmies, source), DESTINATION(destination), HAS_GENERAL(hasGeneral), CAN_ATTACK_TEAMMATES(canAttackTeammates), CAN_ATTACK(canAttack), CAN_TRANSFER(canTransfer)
 {
+}
+
+int MovementCommand::getBracket()
+{
+	return 5;
 }
 
 void MovementCommand::resolve()
 {
-	if (SOURCE->getOwner() == COMMANDER)
+	if (TERRITORY->getOwner() == COMMANDER)
 	{
 		if (DESTINATION->getOwner() == COMMANDER)
 		{
 			if (CAN_TRANSFER)
 			{
-				int numArmies = (SOURCE->getNumArmies() < NUM_ARMIES) ? (SOURCE->getNumArmies()) : (NUM_ARMIES);
-				SOURCE->removeArmies(numArmies, false);
+				int numArmies = (TERRITORY->getNumArmies() < NUM_ARMIES) ? (TERRITORY->getNumArmies()) : (NUM_ARMIES);
+				TERRITORY->removeArmies(numArmies, false);
 				DESTINATION->addArmies(numArmies);
 
-				if (HAS_GENERAL && SOURCE->hasGeneral() && !SOURCE->isGeneralExhausted() && !DESTINATION->hasGeneral())
+				if (HAS_GENERAL && TERRITORY->hasGeneral() && !TERRITORY->isGeneralExhausted() && !DESTINATION->hasGeneral())
 				{
-					SOURCE->removeGeneral();
+					TERRITORY->removeGeneral();
 					DESTINATION->addGeneral();
 				}
 			}
@@ -36,8 +41,8 @@ void MovementCommand::resolve()
 			}
 			else if (CAN_TRANSFER)
 			{
-				int numArmies = (SOURCE->getNumArmies() < NUM_ARMIES) ? (SOURCE->getNumArmies()) : (NUM_ARMIES);
-				SOURCE->removeArmies(numArmies, false);
+				int numArmies = (TERRITORY->getNumArmies() < NUM_ARMIES) ? (TERRITORY->getNumArmies()) : (NUM_ARMIES);
+				TERRITORY->removeArmies(numArmies, false);
 				DESTINATION->addArmies(numArmies);
 			}
 		}
@@ -46,23 +51,21 @@ void MovementCommand::resolve()
 			attack();
 		}
 	}
-
-	delete this;
 }
 
 void MovementCommand::attack()
 {
-	bool hasGeneral = HAS_GENERAL && SOURCE->hasGeneral() && !SOURCE->isGeneralExhausted();
-	bool hasUninvolvedGeneral = !hasGeneral && SOURCE->hasGeneral();
-	int numArmies = (SOURCE->getNumArmies() < NUM_ARMIES) ? (SOURCE->getNumArmies()) : (NUM_ARMIES);
+	bool hasGeneral = HAS_GENERAL && TERRITORY->hasGeneral() && !TERRITORY->isGeneralExhausted();
+	bool hasUninvolvedGeneral = !hasGeneral && TERRITORY->hasGeneral();
+	int numArmies = (TERRITORY->getNumArmies() < NUM_ARMIES) ? (TERRITORY->getNumArmies()) : (NUM_ARMIES);
 	int numAttackersLost = ArmyHandler::getNumAttackersKilled(DESTINATION->getTotalArmies(), DESTINATION->hasGeneral());
 	int numDefendersLost = ArmyHandler::getNumDefendersKilled(numArmies, hasGeneral);
 
-	SOURCE->removeArmies(numArmies, false);
+	TERRITORY->removeArmies(numArmies, false);
 
 	if (hasGeneral)
 	{
-		SOURCE->removeGeneral();
+		TERRITORY->removeGeneral();
 	}
 
 	if (numDefendersLost > DESTINATION->getTotalArmies())
@@ -111,11 +114,11 @@ void MovementCommand::attack()
 	else
 	{
 		//failure
-		SOURCE->addArmies(numArmies);
+		TERRITORY->addArmies(numArmies);
 		
 		if (hasGeneral)
 		{
-			SOURCE->addGeneral();
+			TERRITORY->addGeneral();
 		}
 	}
 }

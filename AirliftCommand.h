@@ -3,18 +3,16 @@
 #include "Command.h"
 #include "Territory.h"
 
-class AirliftCommand : Command
+class AirliftCommand : public Command
 {
 public:
 	AirliftCommand(Player* commander, Territory* source, Territory* destination, int numArmies, bool hasGeneral);
 
-	const int NUM_ARMIES;
-	Player* const COMMANDER;
-	Territory* const SOURCE;
 	Territory* const DESTINATION;
 	const bool HAS_GENERAL;
 
 	static void setBracket(bool isEarly);
+	static int getBracket();
 
 	void resolve();
 

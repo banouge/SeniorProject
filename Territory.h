@@ -42,6 +42,7 @@ public:
 	Player* getOwner();
 	bool hasGeneral();
 	bool isGeneralExhausted();
+	bool wasCapturedThisTurn();
 
 private:
 	std::string name;
@@ -54,5 +55,6 @@ private:
 	int numExhaustedArmies;
 	bool doesHaveGeneral;
 	bool hasExhaustedGeneral;
+	Player* oldOwner;
 	Player* owner;
 };

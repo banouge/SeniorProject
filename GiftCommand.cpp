@@ -1,15 +1,20 @@
 #include "GiftCommand.h"
 #include "Player.h"
 
-int GiftCommand::bracket = 4;
+int GiftCommand::bracket = 3;
 
-GiftCommand::GiftCommand(Player* commander, Territory* territory, Player* newOwner) : Command(commander, bracket, 0, territory), COMMANDER(commander), TERRITORY(territory), NEW_OWNER(newOwner)
+GiftCommand::GiftCommand(Player* commander, Territory* territory, Player* newOwner) : Command(commander, bracket, 0, territory), NEW_OWNER(newOwner)
 {
 }
 
 void GiftCommand::setBracket(bool isEarly)
 {
-	bracket = (isEarly) ? (4) : (8);
+	bracket = (isEarly) ? (3) : (7);
+}
+
+int GiftCommand::getBracket()
+{
+	return bracket;
 }
 
 void GiftCommand::resolve()
@@ -18,6 +23,4 @@ void GiftCommand::resolve()
 	{
 		TERRITORY->setOwner(NEW_OWNER);
 	}
-
-	delete this;
 }

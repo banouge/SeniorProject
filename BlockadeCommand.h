@@ -3,16 +3,14 @@
 #include "Command.h"
 #include "Territory.h"
 
-class BlockadeCommand : Command
+class BlockadeCommand : public Command
 {
 public:
 	BlockadeCommand(Player* commander, Territory* territory);
 
-	Player* const COMMANDER;
-	Territory* const TERRITORY;
-
 	static void setBracket(bool isEarly);
 	static void setMultiplier(float m);
+	static int getBracket();
 
 	void resolve();
 

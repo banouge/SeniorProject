@@ -1,40 +1,43 @@
 #include "AirliftCommand.h"
 #include "Player.h"
 
-int AirliftCommand::bracket = 3;
+int AirliftCommand::bracket = 2;
 
-AirliftCommand::AirliftCommand(Player* commander, Territory* source, Territory* destination, int numArmies, bool hasGeneral) : Command(commander, bracket, numArmies, source), COMMANDER(commander), SOURCE(source), DESTINATION(destination), NUM_ARMIES(numArmies), HAS_GENERAL(hasGeneral)
+AirliftCommand::AirliftCommand(Player* commander, Territory* source, Territory* destination, int numArmies, bool hasGeneral) : Command(commander, bracket, numArmies, source), DESTINATION(destination), HAS_GENERAL(hasGeneral)
 {
 }
 
 void AirliftCommand::setBracket(bool isEarly)
 {
-	bracket = (isEarly) ? (3) : (7);
+	bracket = (isEarly) ? (2) : (6);
+}
+
+int AirliftCommand::getBracket()
+{
+	return bracket;
 }
 
 void AirliftCommand::resolve()
 {
-	if (SOURCE->getOwner() == COMMANDER)
+	if (TERRITORY->getOwner() == COMMANDER)
 	{
 		if (DESTINATION->getOwner() == COMMANDER)
 		{
-			int numArmies = (SOURCE->getNumArmies() < NUM_ARMIES) ? (SOURCE->getNumArmies()) : (NUM_ARMIES);
-			SOURCE->removeArmies(numArmies, false);
+			int numArmies = (TERRITORY->getNumArmies() < NUM_ARMIES) ? (TERRITORY->getNumArmies()) : (NUM_ARMIES);
+			TERRITORY->removeArmies(numArmies, false);
 			DESTINATION->addArmies(numArmies);
 
-			if (HAS_GENERAL && SOURCE->hasGeneral() && !SOURCE->isGeneralExhausted() && !DESTINATION->hasGeneral())
+			if (HAS_GENERAL && TERRITORY->hasGeneral() && !TERRITORY->isGeneralExhausted() && !DESTINATION->hasGeneral())
 			{
-				SOURCE->removeGeneral();
+				TERRITORY->removeGeneral();
 				DESTINATION->addGeneral();
 			}
 		}
 		else if (COMMANDER->hasTeammate(DESTINATION->getOwner()))
 		{
-			int numArmies = (SOURCE->getNumArmies() < NUM_ARMIES) ? (SOURCE->getNumArmies()) : (NUM_ARMIES);
-			SOURCE->removeArmies(numArmies, false);
+			int numArmies = (TERRITORY->getNumArmies() < NUM_ARMIES) ? (TERRITORY->getNumArmies()) : (NUM_ARMIES);
+			TERRITORY->removeArmies(numArmies, false);
 			DESTINATION->addArmies(numArmies);
 		}
 	}
-
-	delete this;
 }

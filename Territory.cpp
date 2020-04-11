@@ -180,6 +180,7 @@ void Territory::rejuvenateArmies()
 	numExhaustedArmies = 0;
 	doesHaveGeneral = hasExhaustedGeneral || doesHaveGeneral;
 	hasExhaustedGeneral = false;
+	oldOwner = owner;
 }
 
 double Territory::getHeight()
@@ -230,4 +231,9 @@ bool Territory::hasGeneral()
 bool Territory::isGeneralExhausted()
 {
 	return hasExhaustedGeneral;
+}
+
+bool Territory::wasCapturedThisTurn()
+{
+	return owner != oldOwner;
 }

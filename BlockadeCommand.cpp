@@ -1,21 +1,26 @@
 #include "BlockadeCommand.h"
 #include "Player.h"
 
-int BlockadeCommand::bracket = 4;
+int BlockadeCommand::bracket = 3;
 float BlockadeCommand::multiplier = 3.0f;
 
-BlockadeCommand::BlockadeCommand(Player* commander, Territory* territory) : Command(commander, bracket, 0, territory), COMMANDER(commander), TERRITORY(territory)
+BlockadeCommand::BlockadeCommand(Player* commander, Territory* territory) : Command(commander, bracket, 0, territory)
 {
 }
 
 void BlockadeCommand::setBracket(bool isEarly)
 {
-	bracket = (isEarly) ? (4) : (8);
+	bracket = (isEarly) ? (3) : (7);
 }
 
 void BlockadeCommand::setMultiplier(float m)
 {
 	multiplier = m;
+}
+
+int BlockadeCommand::getBracket()
+{
+	return bracket;
 }
 
 void BlockadeCommand::resolve()
@@ -25,6 +30,4 @@ void BlockadeCommand::resolve()
 		TERRITORY->setTotalArmies((int)round(multiplier * TERRITORY->getTotalArmies()));
 		TERRITORY->setOwner(nullptr);
 	}
-
-	delete this;
 }
