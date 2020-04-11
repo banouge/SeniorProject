@@ -1,9 +1,10 @@
 #pragma once
 
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "Command.h"
 
+class Command;
 class Territory;
 class TurnHandler;
 
@@ -27,11 +28,17 @@ public:
 	void addTerritory(Territory* territory);
 	void removeTerritory(Territory* territory);
 	void clearCommands(bool haveCommandsResolved);
+	void moveCommand(int from, int to, std::vector<Command*>& vector);
+	void removeCommand(int index, std::vector<Command*>& vector);
 	int getNumGenerals();
 	int getNumTerritories();
+	std::vector<Command*>& getMovementCommands();
+	std::vector<Command*>& getAirliftCommands();
+	std::vector<Command*>& getOwnershipCommands();
 
 private:
 	std::unordered_set<Territory*> territories;
+	std::unordered_map<Territory*, int> availableArmies;
 	std::unordered_set<Command*> commands;
 	std::vector<Command*> movementCommands;
 	std::vector<Command*> airliftCommands;

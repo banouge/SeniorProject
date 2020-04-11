@@ -2,7 +2,7 @@
 #include "MovementCommand.h"
 #include "Player.h"
 
-MovementCommand::MovementCommand(Player* commander, Territory* source, Territory* destination, int numArmies, bool hasGeneral, bool canAttackTeammates, bool canAttack, bool canTransfer) : Command(commander, 6), COMMANDER(commander), SOURCE(source), DESTINATION(destination), NUM_ARMIES(numArmies), HAS_GENERAL(hasGeneral), CAN_ATTACK_TEAMMATES(canAttackTeammates), CAN_ATTACK(canAttack), CAN_TRANSFER(canTransfer)
+MovementCommand::MovementCommand(Player* commander, Territory* source, Territory* destination, int numArmies, bool hasGeneral, bool canAttackTeammates, bool canAttack, bool canTransfer) : Command(commander, 6, numArmies, source), COMMANDER(commander), SOURCE(source), DESTINATION(destination), NUM_ARMIES(numArmies), HAS_GENERAL(hasGeneral), CAN_ATTACK_TEAMMATES(canAttackTeammates), CAN_ATTACK(canAttack), CAN_TRANSFER(canTransfer)
 {
 }
 

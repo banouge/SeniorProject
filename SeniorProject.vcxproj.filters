@@ -46,7 +46,9 @@
     <ClCompile Include="BlockadeCommand.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GiftCommand.cpp" />
+    <ClCompile Include="GiftCommand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArmyHandler.h">
@@ -91,7 +93,9 @@
     <ClInclude Include="BlockadeCommand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GiftCommand.h" />
+    <ClInclude Include="GiftCommand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">

@@ -4,7 +4,7 @@
 int BlockadeCommand::bracket = 4;
 float BlockadeCommand::multiplier = 3.0f;
 
-BlockadeCommand::BlockadeCommand(Player* commander, Territory* territory) : Command(commander, bracket), COMMANDER(commander), TERRITORY(territory)
+BlockadeCommand::BlockadeCommand(Player* commander, Territory* territory) : Command(commander, bracket, 0, territory), COMMANDER(commander), TERRITORY(territory)
 {
 }
 

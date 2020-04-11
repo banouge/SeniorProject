@@ -6,4 +6,9 @@ class Player;
 
 class TurnHandler
 {
+public:
+
+
+private:
+
 };

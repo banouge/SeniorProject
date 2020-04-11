@@ -3,7 +3,7 @@
 
 int GiftCommand::bracket = 4;
 
-GiftCommand::GiftCommand(Player* commander, Territory* territory, Player* newOwner) : Command(commander, bracket), COMMANDER(commander), TERRITORY(territory), NEW_OWNER(newOwner)
+GiftCommand::GiftCommand(Player* commander, Territory* territory, Player* newOwner) : Command(commander, bracket, 0, territory), COMMANDER(commander), TERRITORY(territory), NEW_OWNER(newOwner)
 {
 }
 
