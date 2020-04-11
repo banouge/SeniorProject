@@ -126,8 +126,10 @@
     <ClCompile Include="AirliftCommand.cpp" />
     <ClCompile Include="ArmyHandler.cpp" />
     <ClCompile Include="Bitmap.cpp" />
+    <ClCompile Include="BlockadeCommand.cpp" />
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="Delaunay.cpp" />
+    <ClCompile Include="GiftCommand.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MapGenerator.cpp" />
     <ClCompile Include="Map.cpp" />
@@ -142,8 +144,10 @@
     <ClInclude Include="AirliftCommand.h" />
     <ClInclude Include="ArmyHandler.h" />
     <ClInclude Include="Bitmap.h" />
+    <ClInclude Include="BlockadeCommand.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="Delaunay.h" />
+    <ClInclude Include="GiftCommand.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="MapGenerator.h" />
     <ClInclude Include="MovementCommand.h" />

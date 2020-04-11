@@ -1,4 +1,6 @@
 #include "AirliftCommand.h"
+#include "BlockadeCommand.h"
+#include "GiftCommand.h"
 #include "MovementCommand.h"
 #include "Player.h"
 #include "TurnHandler.h"
@@ -30,6 +32,22 @@ Command* Player::createAirliftCommand(Territory* source, Territory* destination,
 	Command* command = (Command*)(new AirliftCommand(this, source, destination, numArmies, hasGeneral));
 	commands.emplace(command);
 	airliftCommands.push_back(command);
+	return command;
+}
+
+Command* Player::createBlockadeCommand(Territory* territory)
+{
+	Command* command = (Command*)(new BlockadeCommand(this, territory));
+	commands.emplace(command);
+	ownershipCommands.push_back(command);
+	return command;
+}
+
+Command* Player::createGiftCommand(Territory* territory, Player* newOwner)
+{
+	Command* command = (Command*)(new GiftCommand(this, territory, newOwner));
+	commands.emplace(command);
+	ownershipCommands.push_back(command);
 	return command;
 }
 
@@ -89,11 +107,17 @@ void Player::clearCommands(bool haveCommandsResolved)
 	commands.clear();
 	movementCommands.clear();
 	airliftCommands.clear();
+	ownershipCommands.clear();
 }
 
 int Player::getNumGenerals()
 {
 	return numGenerals;
+}
+
+int Player::getNumTerritories()
+{
+	return territories.size();
 }
 
 void Player::lose()

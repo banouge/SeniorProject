@@ -42,6 +42,7 @@ void Region::updateOwner(Player* newOwner)
 	if (!newOwner)
 	{
 		owner = nullptr;
+		return;
 	}
 
 	for (Territory* territory : territories)
