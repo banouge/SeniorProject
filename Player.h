@@ -17,6 +17,9 @@ public:
 	bool IS_AI;
 	int INDEX;
 
+	static void setBaseIncome(int base);
+
+	Command* createDeploymentCommand(Territory* territory, int numArmies);
 	Command* createMovementCommand(Territory* source, Territory* destination, int numArmies, bool hasGeneral = false, bool canAttackTeammates = false, bool canAttack = true, bool canTransfer = true);
 	Command* createAirliftCommand(Territory* source, Territory* destination, int numArmies, bool hasGeneral = false);
 	Command* createBlockadeCommand(Territory* territory);
@@ -28,6 +31,7 @@ public:
 	void loseGeneral();
 	void setNumGenerals(int num);
 	void setHasSubmittedCommands(bool areSubmitted);
+	void addIncome(int amount);
 	void addTeammate(Player* player);
 	void addTerritory(Territory* territory);
 	void removeTerritory(Territory* territory);
@@ -39,11 +43,15 @@ public:
 	std::vector<Command*>* getCommandsInBracket(int bracket);
 
 private:
+	static int baseIncome;
+
 	std::unordered_set<Territory*> territories;
 	std::unordered_map<Territory*, int> availableArmies;
 	std::unordered_set<Command*> commands;
 	std::vector<Command*>* commandBrackets[10];
 	std::unordered_set<Player*> teammates;
+	int income;
+	int usedIncome;
 	int numGenerals;
 	bool isStillAlive;
 	bool areCommandsSubmitted;

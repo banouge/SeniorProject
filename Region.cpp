@@ -39,6 +39,11 @@ void Region::writeToOutput(std::ostream& output)
 
 void Region::updateOwner(Player* newOwner)
 {
+	if (owner)
+	{
+		owner->addIncome(-value);
+	}
+
 	if (!newOwner)
 	{
 		owner = nullptr;
@@ -54,6 +59,7 @@ void Region::updateOwner(Player* newOwner)
 	}
 
 	owner = newOwner;
+	owner->addIncome(value);
 }
 
 int Region::getValue()

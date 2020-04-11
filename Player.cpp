@@ -1,14 +1,18 @@
 #include "AirliftCommand.h"
 #include "BlockadeCommand.h"
+#include "DeploymentCommand.h"
 #include "GiftCommand.h"
 #include "MovementCommand.h"
 #include "Player.h"
 #include "TurnHandler.h"
 
+int Player::baseIncome = 5;
+
 Player::Player(int index, bool isAi) : IS_AI(isAi), INDEX(index)
 {
 	numGenerals = 0;
 	isStillAlive = true;
+	income = baseIncome;
 
 	for (int b = 0; b < 10; ++b)
 	{
@@ -29,6 +33,49 @@ Player::~Player()
 	}
 }
 
+void Player::setBaseIncome(int base)
+{
+	baseIncome = base;
+}
+
+Command* Player::createDeploymentCommand(Territory* territory, int numArmies)
+{
+	int index = 0;
+
+	for (; index < commandBrackets[DeploymentCommand::getBracket()]->size(); ++index)
+	{
+		DeploymentCommand* deploymentCommand = (DeploymentCommand*)(commandBrackets[DeploymentCommand::getBracket()]->at(index));
+
+		if (deploymentCommand->TERRITORY == territory)
+		{
+			removeCommand(index, commandBrackets[deploymentCommand->BRACKET]);
+			break;
+		}
+	}
+
+	numArmies = (usedIncome + numArmies > income) ? (income - usedIncome) : (numArmies);
+
+	if (territory->getOwner() == this)
+	{
+		Command* command = (Command*)(new DeploymentCommand(this, territory, numArmies));
+		int remainingArmies = availableArmies.at(territory) + numArmies;
+		usedIncome += numArmies;
+		availableArmies.erase(territory);
+		availableArmies.emplace(territory, remainingArmies);
+		commands.emplace(command);
+		commandBrackets[command->BRACKET]->push_back(command);
+
+		if (index < commandBrackets[command->BRACKET]->size() - 1)
+		{
+			moveCommand(commandBrackets[command->BRACKET]->size() - 1, index, commandBrackets[command->BRACKET]);
+		}
+
+		return command;
+	}
+
+	return nullptr;
+}
+
 Command* Player::createMovementCommand(Territory* source, Territory* destination, int numArmies, bool hasGeneral, bool canAttackTeammates, bool canAttack, bool canTransfer)
 {
 	int index = 0;
@@ -44,7 +91,9 @@ Command* Player::createMovementCommand(Territory* source, Territory* destination
 		}
 	}
 
-	if (source->getOwner() == this && availableArmies.at(source) >= numArmies && (numArmies > 0 || hasGeneral))
+	numArmies = (numArmies > availableArmies.at(source)) ? (availableArmies.at(source)) : (numArmies);
+
+	if (source->getOwner() == this && (numArmies > 0 || hasGeneral))
 	{
 		Command* command = (Command*)(new MovementCommand(this, source, destination, numArmies, hasGeneral, canAttackTeammates, canAttack, canTransfer));
 		int remainingArmies = availableArmies.at(source) - numArmies;
@@ -79,9 +128,10 @@ Command* Player::createAirliftCommand(Territory* source, Territory* destination,
 		}
 	}
 
+	numArmies = (numArmies > availableArmies.at(source)) ? (availableArmies.at(source)) : (numArmies);
 	bool willPlaneBeAbleToLand = (destination->getOwner() == this && (numArmies > 0 || hasGeneral)) || (hasTeammate(destination->getOwner()) && numArmies > 0);
 
-	if (source->getOwner() == this && availableArmies.at(source) >= numArmies && willPlaneBeAbleToLand)
+	if (source->getOwner() == this && willPlaneBeAbleToLand)
 	{
 		Command* command = (Command*)(new AirliftCommand(this, source, destination, numArmies, hasGeneral));
 		int remainingArmies = availableArmies.at(source) - numArmies;
@@ -199,6 +249,11 @@ void Player::setHasSubmittedCommands(bool areSubmitted)
 	areCommandsSubmitted = areSubmitted;
 }
 
+void Player::addIncome(int amount)
+{
+	income += amount;
+}
+
 void Player::addTeammate(Player* player)
 {
 	teammates.emplace(player);
@@ -234,6 +289,7 @@ void Player::clearCommands()
 	commands.clear();
 	availableArmies.clear();
 	areCommandsSubmitted = false;
+	usedIncome = 0;
 
 	for (Territory* territory : territories)
 	{
@@ -267,10 +323,22 @@ void Player::removeCommand(int index, std::vector<Command*>* vector)
 {
 	if (index > -1 && index < vector->size())
 	{
-		int remainingArmies = availableArmies.at(vector->at(index)->TERRITORY) + vector->at(index)->NUM_ARMIES;
-		availableArmies.erase(vector->at(index)->TERRITORY);
-		availableArmies.emplace(vector->at(index)->TERRITORY, remainingArmies);
-		vector->erase(vector->begin() + index);
+		if (vector->at(index)->BRACKET == 1)
+		{
+			//removing deployment so lose armies
+			int remainingArmies = availableArmies.at(vector->at(index)->TERRITORY) - vector->at(index)->NUM_ARMIES;
+			usedIncome -= vector->at(index)->NUM_ARMIES;
+			availableArmies.erase(vector->at(index)->TERRITORY);
+			availableArmies.emplace(vector->at(index)->TERRITORY, remainingArmies);
+			vector->erase(vector->begin() + index);
+		}
+		else
+		{
+			int remainingArmies = availableArmies.at(vector->at(index)->TERRITORY) + vector->at(index)->NUM_ARMIES;
+			availableArmies.erase(vector->at(index)->TERRITORY);
+			availableArmies.emplace(vector->at(index)->TERRITORY, remainingArmies);
+			vector->erase(vector->begin() + index);
+		}
 	}
 }
 

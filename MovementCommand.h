@@ -17,5 +17,7 @@ public:
 	static int getBracket();
 
 	void resolve();
+
+private:
 	void attack();
 };

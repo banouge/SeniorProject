@@ -77,14 +77,14 @@ void Territory::setOwner(Player* owner)
 
 	this->owner = owner;
 
-	if (region)
-	{
-		region->updateOwner(owner);
-	}
-
 	if (owner)
 	{
 		owner->addTerritory(this);
+	}
+
+	if (region)
+	{
+		region->updateOwner(owner);
 	}
 }
 
