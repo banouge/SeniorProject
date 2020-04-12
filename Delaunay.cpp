@@ -11,7 +11,7 @@ Delaunay::Delaunay(int numSites, float width, float height) : WIDTH(width), HEIG
 	//set up rng
 	std::random_device seed;
 	//std::mt19937 rng(seed());
-	std::mt19937 rng(1);
+	std::mt19937 rng(2);
 	std::uniform_real_distribution<float> xDistribution = std::uniform_real_distribution<float>(0.0f, WIDTH);
 	std::uniform_real_distribution<float> yDistribution = std::uniform_real_distribution<float>(0.0f, HEIGHT);
 
@@ -848,7 +848,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, char direction, std::uno
 			if (isSiteTooClose(site, edge, n, HEIGHT))
 			{
 				getOuterVertex(edge1, isOutCw1, 'N', siteIndices, siteVertexSets);
-				getOuterVertex(edge2, isOutCw1, 'N', siteIndices, siteVertexSets);
+				getOuterVertex(edge2, isOutCw2, 'N', siteIndices, siteVertexSets);
 				return;
 			}
 			else
@@ -874,7 +874,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, char direction, std::uno
 			if (isSiteTooClose(site, edge, n, 0.0f))
 			{
 				getOuterVertex(edge1, isOutCw1, 'S', siteIndices, siteVertexSets);
-				getOuterVertex(edge2, isOutCw1, 'S', siteIndices, siteVertexSets);
+				getOuterVertex(edge2, isOutCw2, 'S', siteIndices, siteVertexSets);
 				return;
 			}
 			else
@@ -900,7 +900,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, char direction, std::uno
 			if (isSiteTooClose(site, edge, WIDTH, n))
 			{
 				getOuterVertex(edge1, isOutCw1, 'E', siteIndices, siteVertexSets);
-				getOuterVertex(edge2, isOutCw1, 'E', siteIndices, siteVertexSets);
+				getOuterVertex(edge2, isOutCw2, 'E', siteIndices, siteVertexSets);
 				return;
 			}
 			else
@@ -926,7 +926,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, char direction, std::uno
 			if (isSiteTooClose(site, edge, 0.0f, n))
 			{
 				getOuterVertex(edge1, isOutCw1, 'W', siteIndices, siteVertexSets);
-				getOuterVertex(edge2, isOutCw1, 'W', siteIndices, siteVertexSets);
+				getOuterVertex(edge2, isOutCw2, 'W', siteIndices, siteVertexSets);
 				return;
 			}
 			else
@@ -994,7 +994,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, std::unordered_map<sf::V
 			if (isSiteTooClose(site, edge, n, HEIGHT))
 			{
 				getOuterVertex(edge1, isOutCw1, 'N', siteIndices, siteVertexSets);
-				getOuterVertex(edge2, isOutCw1, 'N', siteIndices, siteVertexSets);
+				getOuterVertex(edge2, isOutCw2, 'N', siteIndices, siteVertexSets);
 				return;
 			}
 			else
@@ -1020,7 +1020,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, std::unordered_map<sf::V
 			if (isSiteTooClose(site, edge, n, 0.0f))
 			{
 				getOuterVertex(edge1, isOutCw1, 'S', siteIndices, siteVertexSets);
-				getOuterVertex(edge2, isOutCw1, 'S', siteIndices, siteVertexSets);
+				getOuterVertex(edge2, isOutCw2, 'S', siteIndices, siteVertexSets);
 				return;
 			}
 			else
@@ -1046,7 +1046,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, std::unordered_map<sf::V
 			if (isSiteTooClose(site, edge, WIDTH, n))
 			{
 				getOuterVertex(edge1, isOutCw1, 'E', siteIndices, siteVertexSets);
-				getOuterVertex(edge2, isOutCw1, 'E', siteIndices, siteVertexSets);
+				getOuterVertex(edge2, isOutCw2, 'E', siteIndices, siteVertexSets);
 				return;
 			}
 			else
@@ -1072,7 +1072,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, std::unordered_map<sf::V
 			if (isSiteTooClose(site, edge, 0.0f, n))
 			{
 				getOuterVertex(edge1, isOutCw1, 'W', siteIndices, siteVertexSets);
-				getOuterVertex(edge2, isOutCw1, 'W', siteIndices, siteVertexSets);
+				getOuterVertex(edge2, isOutCw2, 'W', siteIndices, siteVertexSets);
 				return;
 			}
 			else

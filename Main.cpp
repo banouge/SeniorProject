@@ -9,11 +9,11 @@
 
 int main()
 {
-	MapGenerator(10, 10, 3, 2048, 1024, "Map 2");
+	MapGenerator(10, 10, 3, 2048, 1024, "Map 1");
 	sf::RenderWindow window;
 	Resources::load();
 	window.create(sf::VideoMode::getDesktopMode(), "Shot in the Dark", sf::Style::Fullscreen);
-	PlayScreen::run(&window, "Map 2");
+	PlayScreen::run(&window, "Map 1");
 	window.close();
 	/*Map m("Map 2");
 	Territory* t1 = m.getTerritoryAtPoint(sf::Vector2i(66, 850));
