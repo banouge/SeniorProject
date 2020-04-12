@@ -138,8 +138,11 @@
     <ClCompile Include="MovementCommand.cpp" />
     <ClCompile Include="Perlin.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="PlayScreen.cpp" />
     <ClCompile Include="Region.cpp" />
+    <ClCompile Include="Resources.cpp" />
     <ClCompile Include="Territory.cpp" />
+    <ClCompile Include="TextButton.cpp" />
     <ClCompile Include="TurnHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -157,8 +160,11 @@
     <ClInclude Include="MovementCommand.h" />
     <ClInclude Include="Perlin.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="PlayScreen.h" />
     <ClInclude Include="Region.h" />
+    <ClInclude Include="Resources.h" />
     <ClInclude Include="Territory.h" />
+    <ClInclude Include="TextButton.h" />
     <ClInclude Include="TurnHandler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

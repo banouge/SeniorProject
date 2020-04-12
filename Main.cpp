@@ -1,12 +1,19 @@
-#include "AirliftCommand.h"
+/*#include "AirliftCommand.h"
 #include "BlockadeCommand.h"
 #include "GiftCommand.h"
 #include "Map.h"
-#include "TurnHandler.h"
+#include "TurnHandler.h"*/
+#include "PlayScreen.h"
+#include "Resources.h"
 
 int main()
 {
-	Map m("Map 2");
+	sf::RenderWindow window;
+	Resources::load();
+	window.create(sf::VideoMode::getDesktopMode(), "Shot in the Dark", sf::Style::Fullscreen);
+	PlayScreen::run(&window);
+	window.close();
+	/*Map m("Map 2");
 	Territory* t1 = m.getTerritoryAtPoint(sf::Vector2i(66, 850));
 	Territory* t2 = m.getTerritoryAtPoint(sf::Vector2i(1020, 100));
 	Territory* t3 = m.getTerritoryAtPoint(sf::Vector2i(47, 489));
@@ -53,5 +60,5 @@ int main()
 	TurnHandler::submitCommands(&p1);
 	TurnHandler::submitCommands(&p2);
 
-	TurnHandler::resolveTurn();
+	TurnHandler::resolveTurn();*/
 }
