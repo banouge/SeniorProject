@@ -3,6 +3,7 @@
 
 Map::Map(std::string name): NAME(name)
 {
+	rng = std::mt19937(seed());
 	std::ifstream mapsList("Maps.txt");
 	std::string line;
 	
@@ -88,6 +89,14 @@ Territory* Map::getTerritoryAtPoint(sf::Vector2i point)
 	}
 
 	return nullptr;
+}
+
+void Map::draw(sf::RenderWindow* window)
+{
+	for (std::pair<std::string, Territory*> pair : territories)
+	{
+		pair.second->draw(window);
+	}
 }
 
 void Map::loadMap()
@@ -221,7 +230,7 @@ void Map::loadRegion(std::ifstream& mapFile)
 
 	//VALUE: ?
 	std::getline(mapFile, line);
-	region = new Region(name, std::stoi(line.substr(7)));
+	region = new Region(name, getRandomColor(), std::stoi(line.substr(7)));
 	regions.emplace(name, region);
 
 	//NUMBER OF TERRITORIES: ?
@@ -235,4 +244,10 @@ void Map::loadRegion(std::ifstream& mapFile)
 		region->addTerritory(territories.at(line));
 		territories.at(line)->setRegion(region);
 	}
+}
+
+sf::Color Map::getRandomColor()
+{
+	std::uniform_int_distribution<int> distribution(0, 255);
+	return sf::Color(distribution(rng), distribution(rng), distribution(rng), 255);
 }

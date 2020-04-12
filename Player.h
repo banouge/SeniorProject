@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include "SFML/Graphics.hpp"
 
 class Command;
 class Territory;
@@ -12,11 +13,15 @@ class TurnHandler;
 class Player
 {
 public:
-	Player(int index, bool isAi);
+	Player(int index, bool isAi, sf::Color color);
 	~Player();
 
-	bool IS_AI;
-	int INDEX;
+	static const sf::Color NEUTRAL_COLOR;
+	static const sf::Color FOG_COLOR;
+
+	const bool IS_AI;
+	const int INDEX;
+	const sf::Color COLOR;
 
 	static void setBaseIncome(int base);
 

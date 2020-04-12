@@ -17,6 +17,11 @@ Territory::~Territory()
 	delete shape;
 }
 
+void Territory::draw(sf::RenderWindow* window)
+{
+	window->draw(*shape);
+}
+
 void Territory::setName(std::string name)
 {
 	this->name = name;
@@ -25,6 +30,9 @@ void Territory::setName(std::string name)
 void Territory::setShape(sf::ConvexShape* shape)
 {
 	this->shape = shape;
+	shape->setOutlineThickness(1.0f);
+	shape->setOutlineColor(Region::NEUTRAL_COLOR);
+	shape->setFillColor(Player::NEUTRAL_COLOR);
 }
 
 void Territory::setHeight(double height)
@@ -35,6 +43,11 @@ void Territory::setHeight(double height)
 void Territory::setRegion(Region* region)
 {
 	this->region = region;
+
+	if (!region || !region->getValue())
+	{
+		shape->setOutlineColor(Region::NEUTRAL_COLOR);
+	}
 }
 
 void Territory::setTotalArmies(int totalArmies)
@@ -80,6 +93,11 @@ void Territory::setOwner(Player* owner)
 	if (owner)
 	{
 		owner->addTerritory(this);
+		shape->setFillColor(owner->COLOR);
+	}
+	else
+	{
+		shape->setFillColor(Player::NEUTRAL_COLOR);
 	}
 
 	if (region)

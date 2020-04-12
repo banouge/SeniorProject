@@ -4,8 +4,9 @@ sf::RenderWindow* PlayScreen::window = nullptr;
 TextButton PlayScreen::quitButton = TextButton("QUIT GAME", sf::Color(255, 0, 0, 255), sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255));
 bool PlayScreen::hasInitialized = false;
 void* PlayScreen::button = nullptr;
+Map* PlayScreen::map = nullptr;
 
-void PlayScreen::run(sf::RenderWindow* w)
+void PlayScreen::run(sf::RenderWindow* w, std::string mapName)
 {
 	window = w;
 
@@ -13,6 +14,8 @@ void PlayScreen::run(sf::RenderWindow* w)
 	{
 		initialize();
 	}
+
+	map = new Map(mapName);
 
 	while (window->isOpen())
 	{
@@ -35,11 +38,14 @@ void PlayScreen::run(sf::RenderWindow* w)
 
 		draw();
 	}
+
+	delete map;
 }
 
 void PlayScreen::draw()
 {
 	window->clear();
+	map->draw(window);
 	quitButton.draw(window);
 	window->display();
 }

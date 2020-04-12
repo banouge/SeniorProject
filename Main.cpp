@@ -11,7 +11,7 @@ int main()
 	sf::RenderWindow window;
 	Resources::load();
 	window.create(sf::VideoMode::getDesktopMode(), "Shot in the Dark", sf::Style::Fullscreen);
-	PlayScreen::run(&window);
+	PlayScreen::run(&window, "Map 2");
 	window.close();
 	/*Map m("Map 2");
 	Territory* t1 = m.getTerritoryAtPoint(sf::Vector2i(66, 850));

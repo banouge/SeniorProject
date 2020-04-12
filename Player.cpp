@@ -6,11 +6,13 @@
 #include "Player.h"
 #include "TurnHandler.h"
 
+const sf::Color Player::NEUTRAL_COLOR = sf::Color(255, 255, 255, 255);
+const sf::Color Player::FOG_COLOR = sf::Color(0, 0, 0, 255);
 int Player::baseIncome = 5;
 std::random_device Player::seed;
 std::mt19937 Player::rng(seed());
 
-Player::Player(int index, bool isAi) : IS_AI(isAi), INDEX(index)
+Player::Player(int index, bool isAi, sf::Color color) : IS_AI(isAi), INDEX(index), COLOR(color)
 {
 	numGenerals = 0;
 	isStillAlive = true;

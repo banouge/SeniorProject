@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_set>
-#include "SFML/Graphics/ConvexShape.hpp"
+#include "SFML/Graphics.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "Player.h"
 
@@ -17,6 +17,7 @@ public:
 
 	sf::Vector2f* POSITION;
 
+	void draw(sf::RenderWindow* window);
 	void setName(std::string name);
 	void setShape(sf::ConvexShape* shape);
 	void setHeight(double height);

@@ -1,7 +1,9 @@
 #include "Region.h"
 #include "Territory.h"
 
-Region::Region(std::string name, int value) : NAME(name)
+const sf::Color Region::NEUTRAL_COLOR = sf::Color(0, 0, 0, 255);
+
+Region::Region(std::string name, sf::Color color, int value) : NAME(name)
 {
 	this->value = value;
 }

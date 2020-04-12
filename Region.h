@@ -10,10 +10,13 @@ class Territory;
 class Region
 {
 public:
-	Region(std::string name, int value = -1);
+	Region(std::string name, sf::Color color, int value = -1);
 	~Region();
 
+	static const sf::Color NEUTRAL_COLOR;
+
 	const std::string NAME;
+	const sf::Color COLOR;
 
 	void setValue(int value);
 	void addTerritory(Territory* territory);

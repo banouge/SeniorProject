@@ -99,7 +99,7 @@ void MapGenerator::createRegions(int numRegions, std::unordered_set<Territory*>&
 	while (regions.size() < numRegions)
 	{
 		Territory* seed = *regionSeeds.begin();
-		Region* region = new Region(convertNumberToLetters(regions.size() + 1));
+		Region* region = new Region(convertNumberToLetters(regions.size() + 1), sf::Color());
 		region->addTerritory(seed);
 		seed->setRegion(region);
 		seed->setName(region->NAME + std::to_string(region->getTerritories().size()));
