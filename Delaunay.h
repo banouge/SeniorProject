@@ -56,11 +56,12 @@ private:
 	Edge* replaceEdge(Edge* edge, bool isReverse);
 	Edge* reverseEdge(Edge* edge);
 	void removeEdge(Edge* edge);
-	void createVoronoiCells();
-	bool isOtherSiteFar(sf::Vector2f* site, sf::Vector2f* otherSite, float x, float y);
-	bool addClipVertex(sf::Vector2f* originSite, sf::Vector2f* destinationSite, sf::Vector2f* otherSite, sf::Vector2f* circumcenter, bool shouldExtendTowardCircumcenter, int vertexId, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds);
+	void createVoronoiCells(std::pair<Delaunay::Edge*, Delaunay::Edge*> bottomEdges);
 	sf::Vector2f* getCircumcenter(sf::Vector2f* siteA, sf::Vector2f* siteB, sf::Vector2f* siteC);
-	sf::ConvexShape* createVoronoiCell(sf::Vector2f* site, std::unordered_map<sf::Vector2f*, int>& siteIndices, std::unordered_map<sf::Vector2f*, Edge*>& siteEdges, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds);
+	bool isSiteTooClose(sf::Vector2f* site, Edge* edge, float x, float y);
+	void getOuterVertex(Edge* edge, bool isOutCw, char direction, std::unordered_map<sf::Vector2f*, int>& siteIndices, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets);
+	void getOuterVertex(Edge* edge, bool isOutCw, std::unordered_map<sf::Vector2f*, int>& siteIndices, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets);
+	void getOuterVertices(Edge* firstEdge, std::unordered_map<sf::Vector2f*, int>& siteIndices, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets);
+	void getOtherVertices(sf::Vector2f* site, std::unordered_map<sf::Vector2f*, int>& siteIndices, std::unordered_map<sf::Vector2f*, Edge*>& siteEdges, std::unordered_map<sf::Vector2f*, std::vector<std::pair<sf::Vector2f*, float>*>*>& siteVertexSets, std::unordered_set<int>& vertexIds);
 	int getVertexId(std::unordered_map<sf::Vector2f*, int>& siteIndices, sf::Vector2f* siteA, sf::Vector2f* siteB, sf::Vector2f* siteC);
-	int getVertexId(std::unordered_map<sf::Vector2f*, int>& siteIndices, sf::Vector2f* siteA, sf::Vector2f* siteB);
 };

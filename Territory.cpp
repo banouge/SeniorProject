@@ -30,7 +30,7 @@ void Territory::setName(std::string name)
 void Territory::setShape(sf::ConvexShape* shape)
 {
 	this->shape = shape;
-	shape->setOutlineThickness(1.0f);
+	shape->setOutlineThickness(3.0f);
 	shape->setOutlineColor(Region::NEUTRAL_COLOR);
 	shape->setFillColor(Player::NEUTRAL_COLOR);
 }
@@ -47,6 +47,10 @@ void Territory::setRegion(Region* region)
 	if (!region || !region->getValue())
 	{
 		shape->setOutlineColor(Region::NEUTRAL_COLOR);
+	}
+	else
+	{
+		shape->setOutlineColor(region->COLOR);
 	}
 }
 

@@ -3,7 +3,7 @@
 
 const sf::Color Region::NEUTRAL_COLOR = sf::Color(0, 0, 0, 255);
 
-Region::Region(std::string name, sf::Color color, int value) : NAME(name)
+Region::Region(std::string name, sf::Color color, int value) : NAME(name), COLOR(color)
 {
 	this->value = value;
 }

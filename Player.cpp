@@ -6,7 +6,7 @@
 #include "Player.h"
 #include "TurnHandler.h"
 
-const sf::Color Player::NEUTRAL_COLOR = sf::Color(255, 255, 255, 255);
+const sf::Color Player::NEUTRAL_COLOR = sf::Color(255, 255, 255, 128);
 const sf::Color Player::FOG_COLOR = sf::Color(0, 0, 0, 255);
 int Player::baseIncome = 5;
 std::random_device Player::seed;

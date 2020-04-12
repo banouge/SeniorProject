@@ -5,11 +5,11 @@ TextButton::TextButton(std::string string, sf::Color buttonColor, sf::Color butt
 {
 	this->string = string;
 
-	button.setOutlineThickness(1.0f);
+	button.setOutlineThickness(3.0f);
 	button.setOutlineColor(buttonOutlineColor);
 	button.setFillColor(buttonColor);
 
-	text.setOutlineThickness(1.0f);
+	text.setOutlineThickness(3.0f);
 	text.setOutlineColor(textOutlineColor);
 	text.setFillColor(textColor);
 	text.setFont(Resources::arialFont);

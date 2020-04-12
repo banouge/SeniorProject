@@ -3,11 +3,13 @@
 #include "GiftCommand.h"
 #include "Map.h"
 #include "TurnHandler.h"*/
+#include "MapGenerator.h"
 #include "PlayScreen.h"
 #include "Resources.h"
 
 int main()
 {
+	MapGenerator(10, 10, 3, 2048, 1024, "Map 2");
 	sf::RenderWindow window;
 	Resources::load();
 	window.create(sf::VideoMode::getDesktopMode(), "Shot in the Dark", sf::Style::Fullscreen);
