@@ -127,6 +127,7 @@
     <ClCompile Include="ArmyHandler.cpp" />
     <ClCompile Include="Bitmap.cpp" />
     <ClCompile Include="BlockadeCommand.cpp" />
+    <ClCompile Include="CardCommand.cpp" />
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="Delaunay.cpp" />
     <ClCompile Include="DeploymentCommand.cpp" />
@@ -146,6 +147,7 @@
     <ClInclude Include="ArmyHandler.h" />
     <ClInclude Include="Bitmap.h" />
     <ClInclude Include="BlockadeCommand.h" />
+    <ClInclude Include="CardCommand.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="Delaunay.h" />
     <ClInclude Include="DeploymentCommand.h" />

@@ -43,6 +43,7 @@ public:
 	bool hasGeneral();
 	bool isGeneralExhausted();
 	bool wasCapturedThisTurn();
+	bool hasNeighbor(Territory* neighbor);
 
 private:
 	std::string name;

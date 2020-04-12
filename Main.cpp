@@ -1,5 +1,7 @@
+#include "AirliftCommand.h"
+#include "BlockadeCommand.h"
+#include "GiftCommand.h"
 #include "Map.h"
-#include "Player.h"
 #include "TurnHandler.h"
 
 int main()
@@ -11,6 +13,10 @@ int main()
 	Territory* t4 = m.getTerritoryAtPoint(sf::Vector2i(8, 740));
 	Player p1(1, false);
 	Player p2(2, true);
+	AirliftCommand::setWeight(1);
+	BlockadeCommand::setMinPiecesPerTurn(1);
+	BlockadeCommand::setWeight(2);
+	GiftCommand::setWeight(3);
 
 	p1.setNumGenerals(1);
 	p2.setNumGenerals(1);
@@ -22,7 +28,7 @@ int main()
 	t2->setTotalArmies(2);
 	t2->addGeneral();
 	t3->setOwner(&p1);
-	t3->setTotalArmies(1);
+	t3->setTotalArmies(2);
 	t4->setOwner(&p1);
 	t4->setTotalArmies(1);
 
@@ -39,6 +45,7 @@ int main()
 	p1.createMovementCommand(t1, t2, 24);
 	p1.createMovementCommand(t1, t3, 5);
 	p1.createMovementCommand(t1, t2, 29, true);
+	p1.createAirliftCommand(t3, t1, 2);
 	p1.createAirliftCommand(t3, t1, 1);
 	p1.createGiftCommand(t3, &p2);
 	p1.createBlockadeCommand(t4);
@@ -47,5 +54,4 @@ int main()
 	TurnHandler::submitCommands(&p2);
 
 	TurnHandler::resolveTurn();
-	//TODO: restrict move to neighbors, restrict cards based on cards
 }

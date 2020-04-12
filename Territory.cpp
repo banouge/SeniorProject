@@ -237,3 +237,8 @@ bool Territory::wasCapturedThisTurn()
 {
 	return owner != oldOwner;
 }
+
+bool Territory::hasNeighbor(Territory* neighbor)
+{
+	return neighbors.count(neighbor);
+}

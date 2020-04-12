@@ -1,5 +1,6 @@
 #pragma once
 
+#include <random>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -38,18 +39,22 @@ public:
 	void clearCommands();
 	void moveCommand(int from, int to, std::vector<Command*>* vector);
 	void removeCommand(int index, std::vector<Command*>* vector);
+	void gainCard();
 	int getNumGenerals();
 	int getNumTerritories();
 	std::vector<Command*>* getCommandsInBracket(int bracket);
 
 private:
 	static int baseIncome;
+	static std::random_device seed;
+	static std::mt19937 rng;
 
 	std::unordered_set<Territory*> territories;
 	std::unordered_map<Territory*, int> availableArmies;
 	std::unordered_set<Command*> commands;
 	std::vector<Command*>* commandBrackets[10];
 	std::unordered_set<Player*> teammates;
+	int cardPieces[10];
 	int income;
 	int usedIncome;
 	int numGenerals;

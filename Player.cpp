@@ -7,6 +7,8 @@
 #include "TurnHandler.h"
 
 int Player::baseIncome = 5;
+std::random_device Player::seed;
+std::mt19937 Player::rng(seed());
 
 Player::Player(int index, bool isAi) : IS_AI(isAi), INDEX(index)
 {
@@ -17,6 +19,11 @@ Player::Player(int index, bool isAi) : IS_AI(isAi), INDEX(index)
 	for (int b = 0; b < 10; ++b)
 	{
 		commandBrackets[b] = new std::vector<Command*>();
+	}
+
+	for (int c = 0; c < 10; ++c)
+	{
+		cardPieces[c] = 0;
 	}
 }
 
@@ -93,7 +100,7 @@ Command* Player::createMovementCommand(Territory* source, Territory* destination
 
 	numArmies = (numArmies > availableArmies.at(source)) ? (availableArmies.at(source)) : (numArmies);
 
-	if (source->getOwner() == this && (numArmies > 0 || hasGeneral))
+	if (source->getOwner() == this && source->hasNeighbor(destination) && (numArmies > 0 || hasGeneral))
 	{
 		Command* command = (Command*)(new MovementCommand(this, source, destination, numArmies, hasGeneral, canAttackTeammates, canAttack, canTransfer));
 		int remainingArmies = availableArmies.at(source) - numArmies;
@@ -131,10 +138,11 @@ Command* Player::createAirliftCommand(Territory* source, Territory* destination,
 	numArmies = (numArmies > availableArmies.at(source)) ? (availableArmies.at(source)) : (numArmies);
 	bool willPlaneBeAbleToLand = (destination->getOwner() == this && (numArmies > 0 || hasGeneral)) || (hasTeammate(destination->getOwner()) && numArmies > 0);
 
-	if (source->getOwner() == this && willPlaneBeAbleToLand)
+	if (cardPieces[AirliftCommand::INDEX] >= AirliftCommand::getNumPieces() && source->getOwner() == this && willPlaneBeAbleToLand)
 	{
 		Command* command = (Command*)(new AirliftCommand(this, source, destination, numArmies, hasGeneral));
 		int remainingArmies = availableArmies.at(source) - numArmies;
+		cardPieces[AirliftCommand::INDEX] -= AirliftCommand::getNumPieces();
 		availableArmies.erase(source);
 		availableArmies.emplace(source, remainingArmies);
 		commands.emplace(command);
@@ -163,9 +171,10 @@ Command* Player::createBlockadeCommand(Territory* territory)
 		}
 	}
 
-	if (territory->getOwner() == this)
+	if (cardPieces[BlockadeCommand::INDEX] >= BlockadeCommand::getNumPieces() && territory->getOwner() == this)
 	{
 		Command* command = (Command*)(new BlockadeCommand(this, territory));
+		cardPieces[BlockadeCommand::INDEX] -= BlockadeCommand::getNumPieces();
 		commands.emplace(command);
 		commandBrackets[command->BRACKET]->push_back(command);
 		return command;
@@ -192,9 +201,10 @@ Command* Player::createGiftCommand(Territory* territory, Player* newOwner)
 		}
 	}
 
-	if (territory->getOwner() == this)
+	if (cardPieces[GiftCommand::INDEX] >= GiftCommand::getNumPieces() && territory->getOwner() == this)
 	{
 		Command* command = (Command*)(new GiftCommand(this, territory, newOwner));
+		cardPieces[GiftCommand::INDEX] -= GiftCommand::getNumPieces();
 		commands.emplace(command);
 		commandBrackets[command->BRACKET]->push_back(command);
 		return command;
@@ -323,22 +333,62 @@ void Player::removeCommand(int index, std::vector<Command*>* vector)
 {
 	if (index > -1 && index < vector->size())
 	{
+		int remainingArmies = 0;
+
 		if (vector->at(index)->BRACKET == 1)
 		{
-			//removing deployment so lose armies
-			int remainingArmies = availableArmies.at(vector->at(index)->TERRITORY) - vector->at(index)->NUM_ARMIES;
+			//removing deployment
+			remainingArmies = availableArmies.at(vector->at(index)->TERRITORY) - vector->at(index)->NUM_ARMIES;
 			usedIncome -= vector->at(index)->NUM_ARMIES;
-			availableArmies.erase(vector->at(index)->TERRITORY);
-			availableArmies.emplace(vector->at(index)->TERRITORY, remainingArmies);
-			vector->erase(vector->begin() + index);
+		}
+		else if (vector->at(index)->BRACKET == 5)
+		{
+			//removing movement
+			remainingArmies = availableArmies.at(vector->at(index)->TERRITORY) + vector->at(index)->NUM_ARMIES;
 		}
 		else
 		{
-			int remainingArmies = availableArmies.at(vector->at(index)->TERRITORY) + vector->at(index)->NUM_ARMIES;
-			availableArmies.erase(vector->at(index)->TERRITORY);
-			availableArmies.emplace(vector->at(index)->TERRITORY, remainingArmies);
-			vector->erase(vector->begin() + index);
+			//removing card
+			CardCommand* command = (CardCommand*)(vector->at(index));
+			remainingArmies = availableArmies.at(command->TERRITORY) + command->NUM_ARMIES;
+			cardPieces[command->INDEX] += command->COST;
 		}
+
+		commands.erase(vector->at(index));
+		availableArmies.erase(vector->at(index)->TERRITORY);
+		availableArmies.emplace(vector->at(index)->TERRITORY, remainingArmies);
+		delete vector->at(index);
+		vector->erase(vector->begin() + index);
+	}
+}
+
+void Player::gainCard()
+{
+	int sumOfWeights = AirliftCommand::getWeight() + BlockadeCommand::getWeight() + GiftCommand::getWeight();
+	cardPieces[AirliftCommand::INDEX] += AirliftCommand::getMinPiecesPerTurn();
+	cardPieces[BlockadeCommand::INDEX] += BlockadeCommand::getMinPiecesPerTurn();
+	cardPieces[GiftCommand::INDEX] += GiftCommand::getMinPiecesPerTurn();
+
+	if (sumOfWeights)
+	{
+		std::uniform_int_distribution<int> distribution(0, sumOfWeights - 1);
+		int index = distribution(rng);
+
+		if (index < AirliftCommand::getWeight())
+		{
+			cardPieces[AirliftCommand::INDEX] += 1;
+			return;
+		}
+
+		index -= AirliftCommand::getWeight();
+
+		if (index < BlockadeCommand::getWeight())
+		{
+			cardPieces[BlockadeCommand::INDEX] += 1;
+			return;
+		}
+
+		cardPieces[GiftCommand::INDEX] += 1;
 	}
 }
 

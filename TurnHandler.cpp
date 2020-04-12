@@ -70,7 +70,7 @@ void TurnHandler::resolveTurn()
 	{
 		if (player->hasCapturedNewTerritoryThisTurn())
 		{
-			giveCard(player);
+			player->gainCard();
 		}
 
 		player->clearCommands();
@@ -80,9 +80,4 @@ void TurnHandler::resolveTurn()
 bool TurnHandler::comparePlayerPtr(Player* a, Player* b)
 {
 	return a->INDEX < b->INDEX;
-}
-
-void TurnHandler::giveCard(Player* player)
-{
-	//TODO:
 }
