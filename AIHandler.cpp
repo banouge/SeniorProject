@@ -142,7 +142,7 @@ void AIHandler::createCommands(Player* player)
 				for (MovementCommand* command : moves)
 				{
 					player->addArmiesToTerritory(command->TERRITORY, extraArmies);
-					player->createMovementCommand(command->TERRITORY, command->DESTINATION, command->NUM_ARMIES + extraArmies);
+					player->createMovementCommand(command->TERRITORY, command->DESTINATION, command->NUM_ARMIES + player->getAvailableArmies(command->TERRITORY));
 				}
 			}
 			else if (ownedToHostile.size())
