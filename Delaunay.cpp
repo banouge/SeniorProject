@@ -10,8 +10,7 @@ Delaunay::Delaunay(int numSites, float width, float height) : WIDTH(width), HEIG
 {
 	//set up rng
 	std::random_device seed;
-	//std::mt19937 rng(seed());
-	std::mt19937 rng(2);
+	std::mt19937 rng(/*seed()*/3);
 	std::uniform_real_distribution<float> xDistribution = std::uniform_real_distribution<float>(0.0f, WIDTH);
 	std::uniform_real_distribution<float> yDistribution = std::uniform_real_distribution<float>(0.0f, HEIGHT);
 
@@ -734,10 +733,18 @@ void Delaunay::createVoronoiCells(std::pair<Delaunay::Edge*, Delaunay::Edge*> bo
 	}
 
 	//add corners to vertex sets
-	siteVertexSets.at(siteNW)->push_back(new std::pair<sf::Vector2f*, float>(new sf::Vector2f(0.0f, HEIGHT), atan2f(HEIGHT - siteNW->y, -siteNW->x)));
-	siteVertexSets.at(siteNE)->push_back(new std::pair<sf::Vector2f*, float>(new sf::Vector2f(WIDTH, HEIGHT), atan2f(HEIGHT - siteNW->y, WIDTH - siteNW->x)));
-	siteVertexSets.at(siteSW)->push_back(new std::pair<sf::Vector2f*, float>(new sf::Vector2f(0.0f, 0.0f), atan2f(-siteNW->y, -siteNW->x)));
-	siteVertexSets.at(siteSE)->push_back(new std::pair<sf::Vector2f*, float>(new sf::Vector2f(WIDTH, 0.0f), atan2f(-siteNW->y, WIDTH - siteNW->x)));
+	sf::Vector2f* nw = new sf::Vector2f(0.0f, HEIGHT);
+	sf::Vector2f* ne = new sf::Vector2f(WIDTH, HEIGHT);
+	sf::Vector2f* sw = new sf::Vector2f(0.0f, 0.0f);
+	sf::Vector2f* se = new sf::Vector2f(WIDTH, 0.0f);
+	siteVertexSets.at(siteNW)->push_back(new std::pair<sf::Vector2f*, float>(nw, atan2f(HEIGHT - siteNW->y, -siteNW->x)));
+	siteVertexSets.at(siteNE)->push_back(new std::pair<sf::Vector2f*, float>(ne, atan2f(HEIGHT - siteNE->y, WIDTH - siteNE->x)));
+	siteVertexSets.at(siteSW)->push_back(new std::pair<sf::Vector2f*, float>(sw, atan2f(-siteSW->y, -siteSW->x)));
+	siteVertexSets.at(siteSE)->push_back(new std::pair<sf::Vector2f*, float>(se, atan2f(-siteSE->y, WIDTH - siteSE->x)));
+	voronoiVertices.emplace(nw);
+	voronoiVertices.emplace(ne);
+	voronoiVertices.emplace(sw);
+	voronoiVertices.emplace(se);
 
 	//get vertices on outer walls
 	getOuterVertices(bottomEdges.first, siteIndices, siteVertexSets);
@@ -839,7 +846,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, char direction, std::uno
 	float c = (edge->origin->x * edge->origin->x - edge->destination->x * edge->destination->x + edge->origin->y * edge->origin->y - edge->destination->y * edge->destination->y) / 2.0f;
 
 	//check N wall
-	if (direction == 'N' || direction == 'E' || direction == 'W')
+	if (direction == 'N')
 	{
 		float n = (a == 0) ? (-1) : ((c - b * HEIGHT) / a);
 
@@ -865,7 +872,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, char direction, std::uno
 	}
 
 	//check S wall
-	if (direction == 'S' || direction == 'E' || direction == 'W')
+	if (direction == 'S')
 	{
 		float n = (a == 0) ? (-1) : (c / a);
 
@@ -891,7 +898,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, char direction, std::uno
 	}
 
 	//check E wall
-	if (direction == 'E' || direction == 'N' || direction == 'S')
+	if (direction == 'E')
 	{
 		float n = (b == 0) ? (-1) : ((c - a * WIDTH) / b);
 
@@ -917,7 +924,7 @@ void Delaunay::getOuterVertex(Edge* edge, bool isOutCw, char direction, std::uno
 	}
 
 	//check W wall
-	if (direction == 'W' || direction == 'N' || direction == 'S')
+	if (direction == 'W')
 	{
 		float n = (b == 0) ? (-1) : (c / b);
 
