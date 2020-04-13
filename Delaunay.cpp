@@ -10,7 +10,7 @@ Delaunay::Delaunay(int numSites, float width, float height) : WIDTH(width), HEIG
 {
 	//set up rng
 	std::random_device seed;
-	std::mt19937 rng(/*seed()*/3);
+	std::mt19937 rng(seed());
 	std::uniform_real_distribution<float> xDistribution = std::uniform_real_distribution<float>(0.0f, WIDTH);
 	std::uniform_real_distribution<float> yDistribution = std::uniform_real_distribution<float>(0.0f, HEIGHT);
 
