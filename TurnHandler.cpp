@@ -75,6 +75,23 @@ void TurnHandler::resolveTurn()
 
 		player->clearCommands();
 	}
+
+	cleanUp();
+}
+
+void TurnHandler::cleanUp()
+{
+	for (std::pair<Player*, std::unordered_map<int, std::queue<Command*>*>*> pair1 : playerMap)
+	{
+		for (std::pair<int, std::queue<Command*>*> pair2 : *pair1.second)
+		{
+			delete pair2.second;
+		}
+
+		delete pair1.second;
+	}
+
+	playerMap.clear();
 }
 
 bool TurnHandler::comparePlayerPtr(Player* a, Player* b)

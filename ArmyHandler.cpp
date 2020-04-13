@@ -59,6 +59,21 @@ int ArmyHandler::getNumDefendersKilled(int numAttackers, bool doAttackersHaveGen
 	return getNumArmiesKilled(numAttackers, offensiveKillRate, doAttackersHaveGeneral);
 }
 
+int ArmyHandler::getNumArmiesNeeded(int numEnemies, int killRate, bool hasGeneral)
+{
+	return (int)round((hasGeneral) ? ((numEnemies + generalValue) * 100.0 / killRate) : (numEnemies * 100.0 / killRate));
+}
+
+int ArmyHandler::getNumAttackersNeeded(int numDefenders, bool doDefendersHaveGeneral)
+{
+	return getNumArmiesNeeded(numDefenders, offensiveKillRate, doDefendersHaveGeneral);
+}
+
+int ArmyHandler::getNumDefendersNeeded(int numAttackers, bool doAttackersHaveGeneral)
+{
+	return getNumArmiesNeeded(numAttackers, defensiveKillRate, doAttackersHaveGeneral);
+}
+
 int ArmyHandler::weightedRound(double x)
 {
 	double floorX = floor(x);

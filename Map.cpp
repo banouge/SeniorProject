@@ -105,6 +105,11 @@ Territory* Map::getTerritoryAtPoint(sf::Vector2i point)
 	return nullptr;
 }
 
+std::unordered_map<std::string, Region*>& Map::getRegions()
+{
+	return regions;
+}
+
 void Map::draw(sf::RenderWindow* window)
 {
 	for (sf::VertexArray* connection : distantConnections)
@@ -113,6 +118,11 @@ void Map::draw(sf::RenderWindow* window)
 	}
 
 	for (std::pair<std::string, Territory*> pair : territories)
+	{
+		pair.second->draw(window);
+	}
+
+	for (std::pair<std::string, Region*> pair : regions)
 	{
 		pair.second->draw(window);
 	}
@@ -127,6 +137,11 @@ void Map::setOrigin(sf::Vector2f origin)
 	}
 
 	for (std::pair<std::string, Territory*> pair : territories)
+	{
+		pair.second->setOrigin(origin);
+	}
+
+	for (std::pair<std::string, Region*> pair : regions)
 	{
 		pair.second->setOrigin(origin);
 	}
@@ -216,7 +231,6 @@ void Map::loadTerritory(std::ifstream& mapFile)
 	}
 
 	//set left and right
-	territory->initializeText();
 	territoryLeftPointIndices.emplace(territory, leftIndex);
 	territoryRightPointIndices.emplace(territory, rightIndex);
 
@@ -257,6 +271,8 @@ void Map::loadTerritory(std::ifstream& mapFile)
 			territories.at(line)->addDistantNeighbor(territory);
 		}
 	}
+
+	territory->initializeText();
 }
 
 void Map::loadRegion(std::ifstream& mapFile)
@@ -286,4 +302,6 @@ void Map::loadRegion(std::ifstream& mapFile)
 		region->addTerritory(territories.at(line));
 		territories.at(line)->setRegion(region);
 	}
+
+	region->intitializeButton();
 }

@@ -24,10 +24,12 @@ private:
 	static std::unordered_set<std::unordered_set<Player*>*>* teams;
 	static std::unordered_set<sf::Keyboard::Key> keysPressed;
 	static sf::Vector2f origin;
+	static std::vector<Player*> players;
 
 	static void initialize();
 	static void start();
-	static void update();
+	static void handleTurn();
+	static void pan();
 	static void cleanUp();
 	static void draw();
 	static void mouseDown();

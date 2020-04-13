@@ -11,6 +11,7 @@ class TurnHandler
 public:
 	static void submitCommands(Player* player);
 	static void resolveTurn();
+	static void cleanUp();
 
 private:
 	static std::unordered_map<Player*, std::unordered_map<int, std::queue<Command*>*>*> playerMap;

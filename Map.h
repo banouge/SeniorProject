@@ -16,6 +16,7 @@ public:
 	static sf::Color getRandomColor();
 
 	Territory* getTerritoryAtPoint(sf::Vector2i point);
+	std::unordered_map<std::string, Region*>& getRegions();
 	void draw(sf::RenderWindow* window);
 	void setOrigin(sf::Vector2f origin);
 

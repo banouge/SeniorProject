@@ -1,5 +1,7 @@
+#include "AIHandler.h"
 #include "MapGenerator.h"
 #include "PlayScreen.h"
+#include "TurnHandler.h"
 
 sf::RenderWindow* PlayScreen::window = nullptr;
 TextButton PlayScreen::quitButton = TextButton("QUIT GAME", sf::Color(255, 0, 0, 255), sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255));
@@ -16,6 +18,7 @@ Map* PlayScreen::map = nullptr;
 std::unordered_set<std::unordered_set<Player*>*>* PlayScreen::teams = nullptr;
 std::unordered_set<sf::Keyboard::Key> PlayScreen::keysPressed;
 sf::Vector2f PlayScreen::origin;
+std::vector<Player*> PlayScreen::players;
 
 void PlayScreen::run(sf::RenderWindow* w, std::string mapName, std::unordered_set<std::unordered_set<Player*>*>* teams)
 {
@@ -55,7 +58,8 @@ void PlayScreen::run(sf::RenderWindow* w, std::string mapName, std::unordered_se
 			}
 		}
 
-		update();
+		handleTurn();
+		pan();
 		draw();
 	}
 
@@ -93,29 +97,31 @@ void PlayScreen::initialize()
 
 void PlayScreen::start()
 {
-	int teamIndex = 0;
-	int playerIndex = 0;
-	int numPlayers = 0;
-	float y = 0.5f * window->getSize().y;
+	AIHandler::initialize(map, teams);
 
 	for (std::unordered_set<Player*>* team : *teams)
 	{
 		for (Player* player : *team)
 		{
-			++numPlayers;
+			players.push_back(player);
 		}
 	}
 
+	int teamIndex = 0;
+	int numPlayers = players.size();
+	float y = 0.5f * window->getSize().y;
 	float height = 0.4f * window->getSize().y / (float)numPlayers;
 
 	for (std::unordered_set<Player*>* team : *teams)
 	{
+		int playerIndex = 0;
+
 		for (Player* player : *team)
 		{
 			TextButton* playerButton = new TextButton("Player " + std::to_string(player->INDEX), player->COLOR, sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255));
 			playersButtons.emplace(playerButton);
 			playerButton->setSize(0.075f * window->getSize().x, height);
-			playerButton->setPosition(0.025f * window->getSize().x, y);
+			playerButton->setPosition(0.025f * window->getSize().x, y + height * playerIndex++);
 			y += height;
 		}
 
@@ -126,9 +132,49 @@ void PlayScreen::start()
 		teamButton->setPosition(0.0f, y);
 		teamButton->setRotation(-90.0f);
 	}
+
+	int playerIndex = 0;
+
+	for (std::pair<std::string, Region*> pair : map->getRegions())
+	{
+		for (Territory* territory : pair.second->getTerritories())
+		{
+			territory->setTotalArmies(Territory::getBaseNeutralArmies());
+		}
+
+		if (playerIndex < players.size())
+		{
+			Territory* territory = *pair.second->getTerritories().begin();
+			territory->setOwner(players.at(playerIndex));
+			territory->setTotalArmies(Territory::getBaseFriendlyArmies());
+			territory->addGeneral();
+			players.at(playerIndex)->setNumGenerals(1);
+			players.at(playerIndex++)->clearCommands();
+		}
+	}
 }
 
-void PlayScreen::update()
+void PlayScreen::handleTurn()
+{
+	bool isTurnReadyToResolve = true;
+
+	for (Player* player : players)
+	{
+		if (!player->hasSubmittedCommands())
+		{
+			if (player->IS_AI)
+			{
+				AIHandler::createCommands(player);
+			}
+			else
+			{
+				isTurnReadyToResolve = false;
+			}
+		}
+	}
+}
+
+void PlayScreen::pan()
 {
 	sf::Vector2f offset;
 
@@ -174,6 +220,9 @@ void PlayScreen::cleanUp()
 
 	playersButtons.clear();
 	keysPressed.clear();
+	players.clear();
+
+	AIHandler::cleanUp();
 }
 
 void PlayScreen::draw()
@@ -198,7 +247,11 @@ void PlayScreen::draw()
 
 void PlayScreen::mouseDown()
 {
-	if (quitButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+	if (endTurnButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+	{
+		button = &endTurnButton;
+	}
+	else if (quitButton.doesContainPoint(sf::Mouse::getPosition(*window)))
 	{
 		button = &quitButton;
 	}
@@ -206,7 +259,22 @@ void PlayScreen::mouseDown()
 
 void PlayScreen::mouseUp()
 {
-	if (button == &quitButton)
+	if (button == &endTurnButton)
+	{
+		if (endTurnButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+		{
+			for (Player* player : players)
+			{
+				if (!player->hasSubmittedCommands() && !player->IS_AI)
+				{
+					TurnHandler::submitCommands(player);
+				}
+			}
+
+			TurnHandler::resolveTurn();
+		}
+	}
+	else if (button == &quitButton)
 	{
 		if (quitButton.doesContainPoint(sf::Mouse::getPosition(*window)))
 		{

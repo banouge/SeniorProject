@@ -64,7 +64,7 @@ Command* Player::createDeploymentCommand(Territory* territory, int numArmies)
 
 	numArmies = (usedIncome + numArmies > income) ? (income - usedIncome) : (numArmies);
 
-	if (territory->getOwner() == this)
+	if (territory->getOwner() == this && numArmies > 0)
 	{
 		Command* command = (Command*)(new DeploymentCommand(this, territory, numArmies));
 		int remainingArmies = availableArmies.at(territory) + numArmies;
@@ -209,6 +209,45 @@ Command* Player::createGiftCommand(Territory* territory, Player* newOwner)
 		cardPieces[GiftCommand::INDEX] -= GiftCommand::getNumPieces();
 		commands.emplace(command);
 		commandBrackets[command->BRACKET]->push_back(command);
+		return command;
+	}
+
+	return nullptr;
+}
+
+Command* Player::addArmiesToTerritory(Territory* territory, int numArmies)
+{
+	int index = 0;
+
+	for (; index < commandBrackets[DeploymentCommand::getBracket()]->size(); ++index)
+	{
+		DeploymentCommand* deploymentCommand = (DeploymentCommand*)(commandBrackets[DeploymentCommand::getBracket()]->at(index));
+
+		if (deploymentCommand->TERRITORY == territory)
+		{
+			numArmies += deploymentCommand->NUM_ARMIES;
+			removeCommand(index, commandBrackets[deploymentCommand->BRACKET]);
+			break;
+		}
+	}
+
+	numArmies = (usedIncome + numArmies > income) ? (income - usedIncome) : (numArmies);
+
+	if (territory->getOwner() == this && numArmies > 0)
+	{
+		Command* command = (Command*)(new DeploymentCommand(this, territory, numArmies));
+		int remainingArmies = availableArmies.at(territory) + numArmies;
+		usedIncome += numArmies;
+		availableArmies.erase(territory);
+		availableArmies.emplace(territory, remainingArmies);
+		commands.emplace(command);
+		commandBrackets[command->BRACKET]->push_back(command);
+
+		if (index < commandBrackets[command->BRACKET]->size() - 1)
+		{
+			moveCommand(commandBrackets[command->BRACKET]->size() - 1, index, commandBrackets[command->BRACKET]);
+		}
+
 		return command;
 	}
 
@@ -394,6 +433,13 @@ void Player::gainCard()
 	}
 }
 
+void Player::surrender()
+{
+	clearCommands();
+	TurnHandler::submitCommands(this);
+	lose();
+}
+
 int Player::getNumGenerals()
 {
 	return numGenerals;
@@ -404,9 +450,24 @@ int Player::getNumTerritories()
 	return territories.size();
 }
 
+int Player::getRemainingIncome()
+{
+	return income - usedIncome;
+}
+
+int Player::getAvailableArmies(Territory* territory)
+{
+	return (availableArmies.count(territory)) ? (availableArmies.at(territory)) : (-1);
+}
+
 std::vector<Command*>* Player::getCommandsInBracket(int bracket)
 {
 	return commandBrackets[bracket];
+}
+
+std::unordered_set<Territory*>& Player::getTerritories()
+{
+	return territories;
 }
 
 void Player::lose()

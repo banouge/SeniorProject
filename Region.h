@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_set>
 #include "Player.h"
+#include "TextButton.h"
 
 class Territory;
 
@@ -18,6 +19,9 @@ public:
 	const std::string NAME;
 	const sf::Color COLOR;
 
+	void draw(sf::RenderWindow* window);
+	void setOrigin(sf::Vector2f origin);
+	void intitializeButton();
 	void setValue(int value);
 	void addTerritory(Territory* territory);
 	void removeTerritory(Territory* territory);
@@ -31,4 +35,6 @@ private:
 	int value;
 	std::unordered_set<Territory*> territories;
 	Player* owner;
+	TextButton* button;
+	sf::Vector2f position;
 };

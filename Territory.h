@@ -17,6 +17,11 @@ public:
 
 	sf::Vector2f* const POSITION;
 
+	static void setBaseNeutralArmies(int base);
+	static void setBaseFriendlyArmies(int base);
+	static int getBaseNeutralArmies();
+	static int getBaseFriendlyArmies();
+
 	void draw(sf::RenderWindow* window);
 	void setOrigin(sf::Vector2f origin);
 	void updateText();
@@ -50,6 +55,9 @@ public:
 	bool hasNeighbor(Territory* neighbor);
 
 private:
+	static int baseNeutralArmies;
+	static int baseFriendlyArmies;
+
 	std::string name;
 	sf::ConvexShape* shape;
 	sf::Text* text;

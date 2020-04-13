@@ -30,6 +30,7 @@ public:
 	Command* createAirliftCommand(Territory* source, Territory* destination, int numArmies, bool hasGeneral = false);
 	Command* createBlockadeCommand(Territory* territory);
 	Command* createGiftCommand(Territory* territory, Player* newOwner);
+	Command* addArmiesToTerritory(Territory* territory, int numArmies);
 	bool hasTeammate(Player* player);
 	bool isAlive();
 	bool hasSubmittedCommands();
@@ -45,9 +46,13 @@ public:
 	void moveCommand(int from, int to, std::vector<Command*>* vector);
 	void removeCommand(int index, std::vector<Command*>* vector);
 	void gainCard();
+	void surrender();
 	int getNumGenerals();
 	int getNumTerritories();
+	int getRemainingIncome();
+	int getAvailableArmies(Territory* territory);
 	std::vector<Command*>* getCommandsInBracket(int bracket);
+	std::unordered_set<Territory*>& getTerritories();
 
 private:
 	static int baseIncome;

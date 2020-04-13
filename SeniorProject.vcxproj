@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AIHandler.cpp" />
     <ClCompile Include="AirliftCommand.cpp" />
     <ClCompile Include="ArmyHandler.cpp" />
     <ClCompile Include="Bitmap.cpp" />
@@ -146,6 +147,7 @@
     <ClCompile Include="TurnHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AIHandler.h" />
     <ClInclude Include="AirliftCommand.h" />
     <ClInclude Include="ArmyHandler.h" />
     <ClInclude Include="Bitmap.h" />

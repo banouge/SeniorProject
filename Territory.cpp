@@ -2,6 +2,9 @@
 #include "Resources.h"
 #include "Territory.h"
 
+int Territory::baseNeutralArmies = 3;
+int Territory::baseFriendlyArmies = 5;
+
 Territory::Territory(std::string name, sf::Vector2f* position): POSITION(position)
 {
 	this->name = name;
@@ -17,6 +20,26 @@ Territory::~Territory()
 {
 	delete shape;
 	delete text;
+}
+
+void Territory::setBaseNeutralArmies(int base)
+{
+	baseNeutralArmies = base;
+}
+
+void Territory::setBaseFriendlyArmies(int base)
+{
+	baseFriendlyArmies = base;
+}
+
+int Territory::getBaseNeutralArmies()
+{
+	return baseNeutralArmies;
+}
+
+int Territory::getBaseFriendlyArmies()
+{
+	return baseFriendlyArmies;
 }
 
 void Territory::draw(sf::RenderWindow* window)
