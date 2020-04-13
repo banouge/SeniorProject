@@ -1,4 +1,5 @@
 #include "Region.h"
+#include "Resources.h"
 #include "Territory.h"
 
 Territory::Territory(std::string name, sf::Vector2f* position): POSITION(position)
@@ -15,11 +16,63 @@ Territory::Territory(std::string name, sf::Vector2f* position): POSITION(positio
 Territory::~Territory()
 {
 	delete shape;
+	delete text;
 }
 
 void Territory::draw(sf::RenderWindow* window)
 {
 	window->draw(*shape);
+	window->draw(*text);
+}
+
+void Territory::setOrigin(sf::Vector2f origin)
+{
+	shape->setOrigin(origin);
+	text->setPosition(shape->getPosition() + centroidOffset - shape->getOrigin());
+}
+
+void Territory::updateText()
+{
+	text->setString((doesHaveGeneral) ? (name + ": " + std::to_string(numArmies + numExhaustedArmies) + " G") : (name + ": " + std::to_string(numArmies + numExhaustedArmies)));
+	text->setOrigin(0.5f * text->getLocalBounds().width, 0.5f * text->getLocalBounds().height);
+}
+
+void Territory::initializeText()
+{
+	sf::Vector2f min = sf::Vector2f(FLT_MAX, FLT_MAX);
+	sf::Vector2f max = sf::Vector2f(-FLT_MAX, -FLT_MAX);
+
+	for (int v = 0; v < shape->getPointCount(); ++v)
+	{
+		if (shape->getPoint(v).x < min.x)
+		{
+			min.x = shape->getPoint(v).x;
+		}
+
+		if (shape->getPoint(v).x > max.x)
+		{
+			max.x = shape->getPoint(v).x;
+		}
+
+		if (shape->getPoint(v).y < min.y)
+		{
+			min.y = shape->getPoint(v).y;
+		}
+
+		if (shape->getPoint(v).y > max.y)
+		{
+			max.y = shape->getPoint(v).y;
+		}
+	}
+
+	centroidOffset = 0.5f * (min + max);
+
+	text = new sf::Text((doesHaveGeneral) ? (name + ": " + std::to_string(numArmies + numExhaustedArmies) + " G") : (name + ": " + std::to_string(numArmies + numExhaustedArmies)), Resources::arialFont);
+	text->setOrigin(0.5f * text->getLocalBounds().width, 0.5f * text->getLocalBounds().height);
+	text->setPosition(*POSITION + centroidOffset);
+	text->setOutlineThickness(3.0f);
+	text->setOutlineColor(sf::Color(0, 0, 0, 255));
+	text->setFillColor(sf::Color(255, 255, 255, 255));
 }
 
 void Territory::setName(std::string name)
@@ -71,18 +124,22 @@ void Territory::setTotalArmies(int totalArmies)
 		numExhaustedArmies = 0;
 		numArmies = totalArmies;
 	}
+
+	updateText();
 }
 
 void Territory::addGeneral()
 {
 	doesHaveGeneral = true;
 	hasExhaustedGeneral = true;
+	updateText();
 }
 
 void Territory::removeGeneral()
 {
 	doesHaveGeneral = false;
 	hasExhaustedGeneral = false;
+	updateText();
 }
 
 void Territory::setOwner(Player* owner)
@@ -124,6 +181,7 @@ void Territory::addDistantNeighbor(Territory* neighbor)
 void Territory::addArmies(int numNewArmies)
 {
 	numExhaustedArmies += numNewArmies;
+	updateText();
 }
 
 void Territory::removeArmies(int numLostArmies, bool shouldExhaustedBeRemovedFirst)
@@ -162,6 +220,8 @@ void Territory::removeArmies(int numLostArmies, bool shouldExhaustedBeRemovedFir
 			numExhaustedArmies = 0;
 		}
 	}
+
+	updateText();
 }
 
 void Territory::removeNeighbor(Territory* neighbor)

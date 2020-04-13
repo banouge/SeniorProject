@@ -15,9 +15,12 @@ public:
 	Territory(std::string name, sf::Vector2f* position);
 	~Territory();
 
-	sf::Vector2f* POSITION;
+	sf::Vector2f* const POSITION;
 
 	void draw(sf::RenderWindow* window);
+	void setOrigin(sf::Vector2f origin);
+	void updateText();
+	void initializeText();
 	void setName(std::string name);
 	void setShape(sf::ConvexShape* shape);
 	void setHeight(double height);
@@ -49,6 +52,7 @@ public:
 private:
 	std::string name;
 	sf::ConvexShape* shape;
+	sf::Text* text;
 	std::unordered_set<Territory*> neighbors;
 	std::unordered_set<Territory*> distantNeighbors;
 	Region* region;
@@ -59,4 +63,5 @@ private:
 	bool hasExhaustedGeneral;
 	Player* oldOwner;
 	Player* owner;
+	sf::Vector2f centroidOffset;
 };

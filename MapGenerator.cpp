@@ -23,11 +23,6 @@ MapGenerator::~MapGenerator()
 	}
 }
 
-bool MapGenerator::compareTerritoryPtr(Territory* a, Territory* b)
-{
-	return a->getHeight() > b->getHeight();
-}
-
 std::string MapGenerator::convertNumberToLetters(int number)
 {
 	std::stringstream stream;
@@ -43,6 +38,11 @@ std::string MapGenerator::convertNumberToLetters(int number)
 	stream >> string;
 	reverse(string.begin(), string.end());
 	return string;
+}
+
+bool MapGenerator::compareTerritoryPtr(Territory* a, Territory* b)
+{
+	return a->getHeight() > b->getHeight();
 }
 
 void MapGenerator::outputData(std::string name)

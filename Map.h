@@ -13,20 +13,25 @@ public:
 
 	const std::string NAME;
 
+	static sf::Color getRandomColor();
+
 	Territory* getTerritoryAtPoint(sf::Vector2i point);
 	void draw(sf::RenderWindow* window);
+	void setOrigin(sf::Vector2f origin);
 
 private:
+	static std::random_device seed;
+	static std::mt19937 rng;
+
 	std::unordered_map<std::string, Territory*> territories;
 	std::unordered_map<std::string, Region*> regions;
 	std::unordered_set<sf::Vector2f*> territoryPositions;
 	std::unordered_map<Territory*, int> territoryLeftPointIndices;
 	std::unordered_map<Territory*, int> territoryRightPointIndices;
-	std::random_device seed;
-	std::mt19937 rng;
+	std::unordered_set<sf::VertexArray*> distantConnections;
+	sf::Vector2f origin;
 
 	void loadMap();
 	void loadTerritory(std::ifstream& mapFile);
 	void loadRegion(std::ifstream& mapFile);
-	sf::Color getRandomColor();
 };

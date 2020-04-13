@@ -10,6 +10,7 @@ public:
 
 	void setSize(float width, float height);
 	void setPosition(float x, float y);
+	void setRotation(float theta);
 	void draw(sf::RenderWindow* window);
 	bool doesContainPoint(sf::Vector2i point);
 

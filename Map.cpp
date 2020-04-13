@@ -1,6 +1,9 @@
 #include <string>
 #include "Map.h"
 
+std::random_device Map::seed;
+std::mt19937 Map::rng(seed());
+
 Map::Map(std::string name): NAME(name)
 {
 	rng = std::mt19937(seed());
@@ -34,6 +37,17 @@ Map::~Map()
 	{
 		delete point;
 	}
+
+	for (sf::VertexArray* connection : distantConnections)
+	{
+		delete connection;
+	}
+}
+
+sf::Color Map::getRandomColor()
+{
+	std::uniform_int_distribution<int> distribution(0, 255);
+	return sf::Color(distribution(rng), distribution(rng), distribution(rng), 255);
 }
 
 Territory* Map::getTerritoryAtPoint(sf::Vector2i point)
@@ -93,10 +107,31 @@ Territory* Map::getTerritoryAtPoint(sf::Vector2i point)
 
 void Map::draw(sf::RenderWindow* window)
 {
+	for (sf::VertexArray* connection : distantConnections)
+	{
+		window->draw(*connection);
+	}
+
 	for (std::pair<std::string, Territory*> pair : territories)
 	{
 		pair.second->draw(window);
 	}
+}
+
+void Map::setOrigin(sf::Vector2f origin)
+{
+	for (sf::VertexArray* connection : distantConnections)
+	{
+		(*connection)[0].position += this->origin - origin;
+		(*connection)[1].position += this->origin - origin;
+	}
+
+	for (std::pair<std::string, Territory*> pair : territories)
+	{
+		pair.second->setOrigin(origin);
+	}
+
+	this->origin = origin;
 }
 
 void Map::loadMap()
@@ -181,6 +216,7 @@ void Map::loadTerritory(std::ifstream& mapFile)
 	}
 
 	//set left and right
+	territory->initializeText();
 	territoryLeftPointIndices.emplace(territory, leftIndex);
 	territoryRightPointIndices.emplace(territory, rightIndex);
 
@@ -211,6 +247,12 @@ void Map::loadTerritory(std::ifstream& mapFile)
 
 		if (territories.count(line))
 		{
+			sf::VertexArray* connection = new sf::VertexArray(sf::Lines, 2);
+			(*connection)[0].position = *territory->POSITION;
+			(*connection)[0].color = sf::Color(255, 255, 255, 255);
+			(*connection)[1].position = *territories.at(line)->POSITION;
+			(*connection)[1].color = sf::Color(255, 255, 255, 255);
+			distantConnections.emplace(connection);
 			territory->addDistantNeighbor(territories.at(line));
 			territories.at(line)->addDistantNeighbor(territory);
 		}
@@ -244,10 +286,4 @@ void Map::loadRegion(std::ifstream& mapFile)
 		region->addTerritory(territories.at(line));
 		territories.at(line)->setRegion(region);
 	}
-}
-
-sf::Color Map::getRandomColor()
-{
-	std::uniform_int_distribution<int> distribution(0, 255);
-	return sf::Color(distribution(rng), distribution(rng), distribution(rng), 255);
 }

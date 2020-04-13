@@ -11,6 +11,8 @@ public:
 	MapGenerator(int numCells, int numTerritories, int numRegions, float width, float height, std::string name);
 	~MapGenerator();
 
+	static std::string convertNumberToLetters(int number);
+
 private:
 	Perlin noise;
 	Delaunay delaunay;
@@ -18,7 +20,6 @@ private:
 	std::unordered_set<Region*> regions;
 
 	static bool compareTerritoryPtr(Territory* a, Territory* b);
-	static std::string convertNumberToLetters(int number);
 
 	void outputData(std::string name);
 	void createRegions(int numRegions, std::unordered_set<Territory*>& regionSeeds);
