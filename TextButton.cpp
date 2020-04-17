@@ -3,7 +3,7 @@
 
 const double RADIANS_PER_DEGREE = 0.01745329251994329577;
 
-TextButton::TextButton(std::string string, sf::Color buttonColor, sf::Color buttonOutlineColor, sf::Color textColor, sf::Color textOutlineColor)
+TextButton::TextButton(std::string string, sf::Color buttonColor, sf::Color buttonOutlineColor, sf::Color textColor, sf::Color textOutlineColor, bool canTypeDigits) : CAN_TYPE_DIGITS(canTypeDigits)
 {
 	this->string = string;
 
@@ -42,6 +42,24 @@ void TextButton::setRotation(float theta)
 	text.setPosition(button.getPosition().x + 0.5f * (button.getSize().x * c - button.getSize().y * s), button.getPosition().y + 0.5f * (button.getSize().x * s + button.getSize().y * c));
 }
 
+void TextButton::addCharacter(char character)
+{
+	if (character == (char)8)
+	{
+		if (string.size())
+		{
+			string = string.substr(0, string.size() - 1);
+		}
+	}
+	else if (character >= '0' && character <= '9')
+	{
+		if (CAN_TYPE_DIGITS)
+		{
+			string += character;
+		}
+	}
+}
+
 void TextButton::draw(sf::RenderWindow* window)
 {
 	window->draw(button);
@@ -51,4 +69,9 @@ void TextButton::draw(sf::RenderWindow* window)
 bool TextButton::doesContainPoint(sf::Vector2i point)
 {
 	return button.getGlobalBounds().contains(point.x, point.y);
+}
+
+std::string TextButton::getString()
+{
+	return string;
 }
