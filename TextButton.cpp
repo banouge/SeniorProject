@@ -3,7 +3,7 @@
 
 const double RADIANS_PER_DEGREE = 0.01745329251994329577;
 
-TextButton::TextButton(std::string string, sf::Color buttonColor, sf::Color buttonOutlineColor, sf::Color textColor, sf::Color textOutlineColor, bool canTypeDigits) : CAN_TYPE_DIGITS(canTypeDigits)
+TextButton::TextButton(std::string string, sf::Color buttonColor, sf::Color buttonOutlineColor, sf::Color textColor, sf::Color textOutlineColor, bool canType, bool canTypeDigits) : CAN_TYPE(canType), CAN_TYPE_DIGITS(canTypeDigits)
 {
 	this->string = string;
 
@@ -42,21 +42,34 @@ void TextButton::setRotation(float theta)
 	text.setPosition(button.getPosition().x + 0.5f * (button.getSize().x * c - button.getSize().y * s), button.getPosition().y + 0.5f * (button.getSize().x * s + button.getSize().y * c));
 }
 
+void TextButton::setString(std::string string)
+{
+	this->string = string;
+	text.setString(string);
+	text.setOrigin(0.5f * text.getLocalBounds().width, 0.5f * text.getLocalBounds().height);
+}
+
 void TextButton::addCharacter(char character)
 {
-	if (character == (char)8)
+	if (CAN_TYPE)
 	{
-		if (string.size())
+		if (character == (char)8)
 		{
-			string = string.substr(0, string.size() - 1);
+			if (string.size())
+			{
+				string = string.substr(0, string.size() - 1);
+			}
 		}
-	}
-	else if (character >= '0' && character <= '9')
-	{
-		if (CAN_TYPE_DIGITS)
+		else if (character >= '0' && character <= '9')
 		{
-			string += character;
+			if (CAN_TYPE_DIGITS)
+			{
+				string += character;
+			}
 		}
+
+		text.setString(string);
+		text.setOrigin(0.5f * text.getLocalBounds().width, 0.5f * text.getLocalBounds().height);
 	}
 }
 

@@ -282,6 +282,11 @@ bool Player::hasCapturedNewTerritoryThisTurn()
 	return false;
 }
 
+bool Player::isInDeployPhase()
+{
+	return isDeploying;
+}
+
 void Player::loseGeneral()
 {
 	if (--numGenerals <= 0)
@@ -298,6 +303,11 @@ void Player::setNumGenerals(int num)
 void Player::setHasSubmittedCommands(bool areSubmitted)
 {
 	areCommandsSubmitted = areSubmitted;
+}
+
+void Player::setPhase(bool isDeployPhase)
+{
+	isDeploying = isDeployPhase;
 }
 
 void Player::addIncome(int amount)
@@ -340,6 +350,7 @@ void Player::clearCommands()
 	commands.clear();
 	availableArmies.clear();
 	areCommandsSubmitted = false;
+	isDeploying = true;
 	usedIncome = 0;
 
 	for (Territory* territory : territories)
@@ -458,6 +469,32 @@ int Player::getRemainingIncome()
 int Player::getAvailableArmies(Territory* territory)
 {
 	return (availableArmies.count(territory)) ? (availableArmies.at(territory)) : (-1);
+}
+
+int Player::getDeployedArmies(Territory* territory)
+{
+	for (Command* command : *commandBrackets[DeploymentCommand::getBracket()])
+	{
+		if (command->TERRITORY == territory)
+		{
+			return command->NUM_ARMIES;
+		}
+	}
+
+	return income - usedIncome;
+}
+
+int Player::getMovedArmies(Territory* source, Territory* destination)
+{
+	for (Command* command : *commandBrackets[MovementCommand::getBracket()])
+	{
+		if (command->TERRITORY == source && ((MovementCommand*)command)->DESTINATION == destination)
+		{
+			return command->NUM_ARMIES;
+		}
+	}
+
+	return availableArmies.at(source);
 }
 
 std::vector<Command*>* Player::getCommandsInBracket(int bracket)

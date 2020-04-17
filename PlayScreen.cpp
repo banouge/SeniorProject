@@ -10,17 +10,22 @@ TextButton PlayScreen::deployPhaseButton = TextButton("DEPLOY\nPHASE", sf::Color
 TextButton PlayScreen::commandPhaseButton = TextButton("COMMAND\nPHASE", sf::Color(0, 128, 255, 255), sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255));
 TextButton PlayScreen::cardsButton = TextButton("CARDS", sf::Color(0, 128, 255, 255), sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255));
 TextButton PlayScreen::analyzeButton = TextButton("ANALYZE\nATTACK", sf::Color(0, 128, 255, 255), sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255));
+TextButton PlayScreen::inputButton = TextButton("", sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255), true, true);
+TextButton PlayScreen::acceptButton = TextButton("O", sf::Color(0, 255, 0, 255), sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255));
 sf::RectangleShape PlayScreen::commandsFrame;
 std::unordered_set<TextButton*> PlayScreen::playersButtons;
 bool PlayScreen::hasInitialized = false;
-void* PlayScreen::button = nullptr;
+TextButton* PlayScreen::button = nullptr;
 Map* PlayScreen::map = nullptr;
 std::unordered_set<std::unordered_set<Player*>*>* PlayScreen::teams = nullptr;
 std::unordered_set<sf::Keyboard::Key> PlayScreen::keysPressed;
 sf::Vector2f PlayScreen::origin;
 std::vector<Player*> PlayScreen::players;
+Territory* PlayScreen::territory1 = nullptr;
+Territory* PlayScreen::territory2 = nullptr;
+Player* PlayScreen::player = nullptr;
 
-void PlayScreen::run(sf::RenderWindow* w, std::string mapName, std::unordered_set<std::unordered_set<Player*>*>* teams)
+void PlayScreen::run(sf::RenderWindow* w, std::string mapName, std::unordered_set<std::unordered_set<Player*>*>* teams, Player* player)
 {
 	window = w;
 
@@ -31,6 +36,7 @@ void PlayScreen::run(sf::RenderWindow* w, std::string mapName, std::unordered_se
 
 	map = new Map(mapName);
 	PlayScreen::teams = teams;
+	PlayScreen::player = player;
 	start();
 
 	while (window->isOpen())
@@ -52,6 +58,9 @@ void PlayScreen::run(sf::RenderWindow* w, std::string mapName, std::unordered_se
 				break;
 			case sf::Event::KeyReleased:
 				keyUp(ev.key.code);
+				break;
+			case sf::Event::TextEntered:
+				handleText(ev.text.unicode);
 				break;
 			default:
 				break;
@@ -87,6 +96,12 @@ void PlayScreen::initialize()
 
 	analyzeButton.setSize(0.1f * window->getSize().x, 0.1f * window->getSize().y);
 	analyzeButton.setPosition(0.0f, 0.3f * window->getSize().y);
+
+	inputButton.setSize(0.1f * window->getSize().x, 0.1f * window->getSize().y);
+	inputButton.setPosition(0.0f, window->getSize().y + 100.0f);
+
+	acceptButton.setSize(0.05f * window->getSize().x, 0.1f * window->getSize().y);
+	acceptButton.setPosition(0.0f, window->getSize().y + 100.0f);
 
 	commandsFrame.setPosition(0.9f * window->getSize().x, 0.0f);
 	commandsFrame.setSize(sf::Vector2f(0.1f * window->getSize().x, window->getSize().y));
@@ -248,12 +263,32 @@ void PlayScreen::draw()
 		textButton->draw(window);
 	}
 
+	inputButton.draw(window);
+	acceptButton.draw(window);
 	window->display();
 }
 
 void PlayScreen::mouseDown()
 {
-	if (endTurnButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+	button = nullptr;
+
+	if (inputButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+	{
+		button = &inputButton;
+	}
+	else if (acceptButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+	{
+		button = &acceptButton;
+	}
+	else if (deployPhaseButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+	{
+		button = &deployPhaseButton;
+	}
+	else if (commandPhaseButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+	{
+		button = &commandPhaseButton;
+	}
+	else if (endTurnButton.doesContainPoint(sf::Mouse::getPosition(*window)))
 	{
 		button = &endTurnButton;
 	}
@@ -261,11 +296,59 @@ void PlayScreen::mouseDown()
 	{
 		button = &quitButton;
 	}
+	else if (territory1)
+	{
+		territory2 = map->getTerritoryAtPoint(sf::Mouse::getPosition(*window));
+	}
+	else
+	{
+		territory1 = map->getTerritoryAtPoint(sf::Mouse::getPosition(*window));
+	}
 }
 
 void PlayScreen::mouseUp()
 {
-	if (button == &endTurnButton)
+	bool isCreatingCommand = false;
+
+	if (button == &inputButton)
+	{
+		if (inputButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+		{
+			isCreatingCommand = true;
+		}
+	}
+	else if (button == &acceptButton)
+	{
+		if (acceptButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+		{
+			if (territory2)
+			{
+				player->createMovementCommand(territory1, territory2, std::stoi(inputButton.getString()));
+			}
+			else
+			{
+				player->createDeploymentCommand(territory1, std::stoi(inputButton.getString()));
+			}
+
+			territory1 = nullptr;
+			territory2 = nullptr;
+		}
+	}
+	else if (button == &deployPhaseButton)
+	{
+		if (deployPhaseButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+		{
+			player->setPhase(true);
+		}
+	}
+	else if (button == &commandPhaseButton)
+	{
+		if (commandPhaseButton.doesContainPoint(sf::Mouse::getPosition(*window)))
+		{
+			player->setPhase(false);
+		}
+	}
+	else if (button == &endTurnButton)
 	{
 		if (endTurnButton.doesContainPoint(sf::Mouse::getPosition(*window)))
 		{
@@ -287,8 +370,112 @@ void PlayScreen::mouseUp()
 			window->close();
 		}
 	}
+	else
+	{
+		Territory* clickedTerritory = map->getTerritoryAtPoint(sf::Mouse::getPosition(*window));
+		isCreatingCommand = true;
 
-	button = nullptr;
+		if (clickedTerritory)
+		{
+			//a territory was clicked
+			if (player->isInDeployPhase())
+			{
+				//deploying
+				if (territory1 == clickedTerritory && territory1->getOwner() == player)
+				{
+					//can deploy
+					button = &inputButton;
+					inputButton.setString(std::to_string(player->getDeployedArmies(territory1)));
+					inputButton.setPosition(sf::Mouse::getPosition(*window).x, sf::Mouse::getPosition(*window).y);
+					acceptButton.setPosition(sf::Mouse::getPosition(*window).x + 0.1f * window->getSize().x, sf::Mouse::getPosition(*window).y);
+				}
+				else
+				{
+					//can't deploy
+					territory1 = nullptr;
+					territory2 = nullptr;
+				}
+			}
+			else
+			{
+				//moving
+				if (territory2 == clickedTerritory)
+				{
+					//destination was clicked
+					if (territory1->hasNeighbor(territory2))
+					{
+						//can move
+						button = &inputButton;
+						inputButton.setString(std::to_string(player->getMovedArmies(territory1, territory2)));
+						inputButton.setPosition(sf::Mouse::getPosition(*window).x, sf::Mouse::getPosition(*window).y);
+						acceptButton.setPosition(sf::Mouse::getPosition(*window).x + 0.1f * window->getSize().x, sf::Mouse::getPosition(*window).y);
+					}
+					else
+					{
+						//can't move
+						if (territory2->getOwner() == player)
+						{
+							//picked new source
+							territory1 = territory2;
+							territory2 = nullptr;
+						}
+						else
+						{
+							//didn't pick new source
+							territory1 = nullptr;
+							territory2 = nullptr;
+						}
+					}
+				}
+				else if (territory1 == clickedTerritory)
+				{
+					//source was clicked
+					if (territory1->getOwner() != player)
+					{
+						//source is invalid
+						territory1 = nullptr;
+						territory2 = nullptr;
+					}
+				}
+				else
+				{
+					//dragged
+					if (territory2)
+					{
+						//changed mind about destination
+						territory2 = nullptr;
+					}
+					else
+					{
+						//changed mind about source
+						territory1 = nullptr;
+					}
+				}
+			}
+		}
+		else
+		{
+			//no territory was clicked
+			territory1 = nullptr;
+			territory2 = nullptr;
+		}
+	}
+
+	if (!isCreatingCommand)
+	{
+		inputButton.setPosition(0.0f, window->getSize().y + 100.0f);
+		acceptButton.setPosition(0.0f, window->getSize().y + 100.0f);
+		territory1 = nullptr;
+		territory2 = nullptr;
+	}
+}
+
+void PlayScreen::handleText(char character)
+{
+	if (button)
+	{
+		button->addCharacter(character);
+	}
 }
 
 void PlayScreen::keyDown(sf::Keyboard::Key key)

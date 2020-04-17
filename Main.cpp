@@ -25,7 +25,7 @@ int main()
 	teamA->emplace(player3);
 	teamB->emplace(player4);
 
-	PlayScreen::run(&window, "Map 3", teams);
+	PlayScreen::run(&window, "Map 3", teams, player1);
 
 	window.close();
 }

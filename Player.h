@@ -35,9 +35,11 @@ public:
 	bool isAlive();
 	bool hasSubmittedCommands();
 	bool hasCapturedNewTerritoryThisTurn();
+	bool isInDeployPhase();
 	void loseGeneral();
 	void setNumGenerals(int num);
 	void setHasSubmittedCommands(bool areSubmitted);
+	void setPhase(bool isDeployPhase);
 	void addIncome(int amount);
 	void addTeammate(Player* player);
 	void addTerritory(Territory* territory);
@@ -51,6 +53,8 @@ public:
 	int getNumTerritories();
 	int getRemainingIncome();
 	int getAvailableArmies(Territory* territory);
+	int getDeployedArmies(Territory* territory);
+	int getMovedArmies(Territory* source, Territory* destination);
 	std::vector<Command*>* getCommandsInBracket(int bracket);
 	std::unordered_set<Territory*>& getTerritories();
 
@@ -70,6 +74,7 @@ private:
 	int numGenerals;
 	bool isStillAlive;
 	bool areCommandsSubmitted;
+	bool isDeploying;
 
 	void lose();
 };

@@ -58,7 +58,7 @@ Territory* Map::getTerritoryAtPoint(sf::Vector2i point)
 
 		if (bounds.contains(point.x, point.y))
 		{
-			sf::Vector2f p(point.x - pair.second->POSITION->x, point.y - pair.second->POSITION->y);
+			sf::Vector2f p(point.x + origin.x - pair.second->POSITION->x, point.y + origin.y - pair.second->POSITION->y);
 			int leftIndex = territoryLeftPointIndices.at(pair.second);
 			int rightIndex = territoryRightPointIndices.at(pair.second);
 
