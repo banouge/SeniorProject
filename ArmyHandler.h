@@ -17,6 +17,7 @@ public:
 	static int getNumArmiesNeeded(int numEnemies, int killRate, bool hasGeneral = false);
 	static int getNumAttackersNeeded(int numDefenders, bool doDefendersHaveGeneral = false);
 	static int getNumDefendersNeeded(int numAttackers, bool doAttackersHaveGeneral = false);
+	static int getNumAttackersForCapture(int numDefenders, bool doDefendersHaveGeneral = false);
 	static int weightedRound(double x);
 
 private:

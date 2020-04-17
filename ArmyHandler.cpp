@@ -64,14 +64,39 @@ int ArmyHandler::getNumArmiesNeeded(int numEnemies, int killRate, bool hasGenera
 	return (int)round((hasGeneral) ? ((numEnemies + generalValue) * 100.0 / killRate) : (numEnemies * 100.0 / killRate));
 }
 
+//how many attackers are needed to kill n defenders?
 int ArmyHandler::getNumAttackersNeeded(int numDefenders, bool doDefendersHaveGeneral)
 {
 	return getNumArmiesNeeded(numDefenders, offensiveKillRate, doDefendersHaveGeneral);
 }
 
+//how many defenders are needed to kill n attackers?
 int ArmyHandler::getNumDefendersNeeded(int numAttackers, bool doAttackersHaveGeneral)
 {
-	return getNumArmiesNeeded(numAttackers, defensiveKillRate, doAttackersHaveGeneral);
+	return (defensiveKillRate) ? (getNumArmiesNeeded(numAttackers, defensiveKillRate, doAttackersHaveGeneral)) : (-1);
+}
+
+//how many attackers are needed to capture a territory with n defenders?
+int ArmyHandler::getNumAttackersForCapture(int numDefenders, bool doDefendersHaveGeneral)
+{
+	if (numDefenders || doDefendersHaveGeneral)
+	{
+		if (offensiveKillRate)
+		{
+			int numNeeded = getNumAttackersNeeded(numDefenders, doDefendersHaveGeneral);
+			int numLost = getNumAttackersKilled(numDefenders, doDefendersHaveGeneral);
+
+			return (numNeeded > numLost) ? (numNeeded) : (numLost + 1);
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	else
+	{
+		return 1;
+	}
 }
 
 int ArmyHandler::weightedRound(double x)

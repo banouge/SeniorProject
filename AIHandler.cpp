@@ -91,6 +91,9 @@ void AIHandler::createCommands(Player* player)
 	playerBorders.erase(player);
 	playerBorders.emplace(player, borders);
 
+	//condition for surrender: has borders
+	shouldSurrender = shouldSurrender && borders->size();
+
 	if (shouldSurrender)
 	{
 		player->surrender();
@@ -98,12 +101,12 @@ void AIHandler::createCommands(Player* player)
 	else
 	{
 		//deploy and attack
-		while (player->getRemainingIncome() && hostileToOwned.size())
+		while (hostileToOwned.size())
 		{
 			std::pair<Territory*, std::unordered_set<Territory*>*> connection = *hostileToOwned.begin();
 			Territory* owned = nullptr;
 			int remainingIncome = player->getRemainingIncome();
-			int numNeeded = ArmyHandler::getNumAttackersNeeded(connection.first->getTotalArmies(), connection.first->hasGeneral());
+			int numNeeded = ArmyHandler::getNumAttackersForCapture(connection.first->getTotalArmies(), connection.first->hasGeneral());
 			int maxAvailable = numNeeded - 1;
 
 			for (Territory* territory : *connection.second)

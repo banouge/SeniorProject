@@ -478,6 +478,7 @@ void Player::lose()
 
 		while (!territories.empty())
 		{
+			(*territories.begin())->removeGeneral();
 			(*territories.begin())->setOwner(nullptr);
 		}
 	}

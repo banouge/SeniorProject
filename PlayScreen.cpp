@@ -114,15 +114,21 @@ void PlayScreen::start()
 
 	for (std::unordered_set<Player*>* team : *teams)
 	{
-		int playerIndex = 0;
-
 		for (Player* player : *team)
 		{
 			TextButton* playerButton = new TextButton("Player " + std::to_string(player->INDEX), player->COLOR, sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255));
 			playersButtons.emplace(playerButton);
 			playerButton->setSize(0.075f * window->getSize().x, height);
-			playerButton->setPosition(0.025f * window->getSize().x, y + height * playerIndex++);
+			playerButton->setPosition(0.025f * window->getSize().x, y);
 			y += height;
+
+			for (Player* teammate : *team)
+			{
+				if (teammate != player)
+				{
+					player->addTeammate(teammate);
+				}
+			}
 		}
 
 		TextButton* teamButton = new TextButton("Team " + MapGenerator::convertNumberToLetters(++teamIndex), sf::Color(0, 192, 255, 255), sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255));
@@ -160,7 +166,7 @@ void PlayScreen::handleTurn()
 
 	for (Player* player : players)
 	{
-		if (!player->hasSubmittedCommands())
+		if (!player->hasSubmittedCommands() && player->isAlive())
 		{
 			if (player->IS_AI)
 			{
