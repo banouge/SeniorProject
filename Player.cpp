@@ -79,6 +79,8 @@ Command* Player::createDeploymentCommand(Territory* territory, int numArmies)
 			moveCommand(commandBrackets[command->BRACKET]->size() - 1, index, commandBrackets[command->BRACKET]);
 		}
 
+		command->setButtonSize(0.1f * window->getSize().x, 0.05f * window->getSize().y);
+		updateCommandButtonPositions();
 		return command;
 	}
 
@@ -116,6 +118,8 @@ Command* Player::createMovementCommand(Territory* source, Territory* destination
 			moveCommand(commandBrackets[command->BRACKET]->size() - 1, index, commandBrackets[command->BRACKET]);
 		}
 
+		command->setButtonSize(0.1f * window->getSize().x, 0.05f * window->getSize().y);
+		updateCommandButtonPositions();
 		return command;
 	}
 
@@ -149,6 +153,8 @@ Command* Player::createAirliftCommand(Territory* source, Territory* destination,
 		availableArmies.emplace(source, remainingArmies);
 		commands.emplace(command);
 		commandBrackets[command->BRACKET]->push_back(command);
+		command->setButtonSize(0.1f * window->getSize().x, 0.05f * window->getSize().y);
+		updateCommandButtonPositions();
 		return command;
 	}
 
@@ -179,6 +185,8 @@ Command* Player::createBlockadeCommand(Territory* territory)
 		cardPieces[BlockadeCommand::INDEX] -= BlockadeCommand::getNumPieces();
 		commands.emplace(command);
 		commandBrackets[command->BRACKET]->push_back(command);
+		command->setButtonSize(0.1f * window->getSize().x, 0.05f * window->getSize().y);
+		updateCommandButtonPositions();
 		return command;
 	}
 
@@ -209,6 +217,8 @@ Command* Player::createGiftCommand(Territory* territory, Player* newOwner)
 		cardPieces[GiftCommand::INDEX] -= GiftCommand::getNumPieces();
 		commands.emplace(command);
 		commandBrackets[command->BRACKET]->push_back(command);
+		command->setButtonSize(0.1f * window->getSize().x, 0.05f * window->getSize().y);
+		updateCommandButtonPositions();
 		return command;
 	}
 
@@ -248,6 +258,8 @@ Command* Player::addArmiesToTerritory(Territory* territory, int numArmies)
 			moveCommand(commandBrackets[command->BRACKET]->size() - 1, index, commandBrackets[command->BRACKET]);
 		}
 
+		command->setButtonSize(0.1f * window->getSize().x, 0.05f * window->getSize().y);
+		updateCommandButtonPositions();
 		return command;
 	}
 
@@ -449,6 +461,34 @@ void Player::surrender()
 	clearCommands();
 	TurnHandler::submitCommands(this);
 	lose();
+}
+
+void Player::setWindow(sf::RenderWindow* window)
+{
+	this->window = window;
+}
+
+void Player::drawCommands()
+{
+	for (Command* command : commands)
+	{
+		command->draw(window);
+	}
+}
+
+void Player::updateCommandButtonPositions()
+{
+	int index = 0;
+	float x = 0.9f * window->getSize().x;
+	float height = 0.05f * window->getSize().y;
+
+	for (std::vector<Command*>* bracket : commandBrackets)
+	{
+		for (Command* command : *bracket)
+		{
+			command->setButtonPosition(x, height * index++);
+		}
+	}
 }
 
 int Player::getNumGenerals()

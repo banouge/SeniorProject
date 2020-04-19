@@ -11,7 +11,7 @@ public:
 	const bool CAN_TYPE;
 	const bool CAN_TYPE_DIGITS;
 
-	void setSize(float width, float height);
+	void setSize(float width, float height, int fontSize = 30);
 	void setPosition(float x, float y);
 	void setRotation(float theta);
 	void setString(std::string string);

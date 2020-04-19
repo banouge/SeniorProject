@@ -119,6 +119,7 @@ void PlayScreen::start()
 		for (Player* player : *team)
 		{
 			players.push_back(player);
+			player->setWindow(window);
 		}
 	}
 
@@ -261,6 +262,14 @@ void PlayScreen::draw()
 	for (TextButton* textButton : playersButtons)
 	{
 		textButton->draw(window);
+	}
+
+	for (Player* player : players)
+	{
+		if (!player->hasSubmittedCommands() && player->isAlive() && !player->IS_AI)
+		{
+			player->drawCommands();
+		}
 	}
 
 	inputButton.draw(window);

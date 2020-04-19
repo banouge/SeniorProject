@@ -49,6 +49,9 @@ public:
 	void removeCommand(int index, std::vector<Command*>* vector);
 	void gainCard();
 	void surrender();
+	void setWindow(sf::RenderWindow* window);
+	void drawCommands();
+	void updateCommandButtonPositions();
 	int getNumGenerals();
 	int getNumTerritories();
 	int getRemainingIncome();
@@ -75,6 +78,7 @@ private:
 	bool isStillAlive;
 	bool areCommandsSubmitted;
 	bool isDeploying;
+	sf::RenderWindow* window;
 
 	void lose();
 };

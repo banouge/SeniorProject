@@ -7,8 +7,9 @@ int BlockadeCommand::numPieces = 1;
 int BlockadeCommand::minPiecesPerTurn = 0;
 float BlockadeCommand::multiplier = 3.0f;
 
-BlockadeCommand::BlockadeCommand(Player* commander, Territory* territory) : CardCommand(commander, bracket, 0, territory, numPieces, INDEX)
+BlockadeCommand::BlockadeCommand(Player* commander, Territory* territory) : CardCommand(commander, bracket, 0, territory, numPieces, INDEX), button("", sf::Color(0, 128, 255, 255), sf::Color(0, 0, 0, 255), sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 255))
 {
+	button.setString(territory->getName() + " is scorched.");
 }
 
 void BlockadeCommand::setBracket(bool isEarly)
@@ -63,4 +64,19 @@ void BlockadeCommand::resolve()
 		TERRITORY->setTotalArmies((int)round(multiplier * TERRITORY->getTotalArmies()));
 		TERRITORY->setOwner(nullptr);
 	}
+}
+
+void BlockadeCommand::draw(sf::RenderWindow* window)
+{
+	button.draw(window);
+}
+
+void BlockadeCommand::setButtonPosition(float x, float y)
+{
+	button.setPosition(x, y);
+}
+
+void BlockadeCommand::setButtonSize(float x, float y)
+{
+	button.setSize(x, y, 12);
 }

@@ -17,12 +17,12 @@ TextButton::TextButton(std::string string, sf::Color buttonColor, sf::Color butt
 	text.setFont(Resources::arialFont);
 }
 
-void TextButton::setSize(float width, float height)
+void TextButton::setSize(float width, float height, int fontSize)
 {
 	button.setSize(sf::Vector2f(width, height));
 
 	text.setString(string);
-	text.setCharacterSize(30);
+	text.setCharacterSize(fontSize);
 	text.setOrigin(0.5f * text.getLocalBounds().width, 0.5f * text.getLocalBounds().height);
 }
 
