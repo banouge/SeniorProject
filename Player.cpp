@@ -537,6 +537,24 @@ int Player::getMovedArmies(Territory* source, Territory* destination)
 	return availableArmies.at(source);
 }
 
+int Player::getAirliftedArmies(Territory* source, Territory* destination)
+{
+	for (Command* command : *commandBrackets[AirliftCommand::getBracket()])
+	{
+		if (command->TERRITORY == source && ((AirliftCommand*)command)->DESTINATION == destination)
+		{
+			return command->NUM_ARMIES;
+		}
+	}
+
+	return availableArmies.at(source);
+}
+
+int Player::getNumCardPieces(int cardIndex)
+{
+	return cardPieces[cardIndex];
+}
+
 std::vector<Command*>* Player::getCommandsInBracket(int bracket)
 {
 	return commandBrackets[bracket];

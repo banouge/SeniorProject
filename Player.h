@@ -58,6 +58,8 @@ public:
 	int getAvailableArmies(Territory* territory);
 	int getDeployedArmies(Territory* territory);
 	int getMovedArmies(Territory* source, Territory* destination);
+	int getAirliftedArmies(Territory* source, Territory* destination);
+	int getNumCardPieces(int cardIndex);
 	std::vector<Command*>* getCommandsInBracket(int bracket);
 	std::unordered_set<Territory*>& getTerritories();
 

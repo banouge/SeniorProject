@@ -1,3 +1,6 @@
+#include "AirliftCommand.h"
+#include "BlockadeCommand.h"
+#include "GiftCommand.h"
 #include "MapGenerator.h"
 #include "PlayScreen.h"
 #include "Resources.h"
@@ -9,6 +12,14 @@ int main()
 	Resources::load();
 	
 	window.create(sf::VideoMode::getDesktopMode(), "Shot in the Dark", sf::Style::Fullscreen);
+
+	AirliftCommand::setNumPieces(1);
+	AirliftCommand::setMinPiecesPerTurn(1);
+	BlockadeCommand::setNumPieces(2);
+	BlockadeCommand::setMinPiecesPerTurn(1);
+	BlockadeCommand::setWeight(1);
+	GiftCommand::setNumPieces(2);
+	GiftCommand::setWeight(2);
 
 	std::unordered_set<std::unordered_set<Player*>*>* teams = new std::unordered_set<std::unordered_set<Player*>*>();
 	std::unordered_set<Player*>* teamA = new std::unordered_set<Player*>();

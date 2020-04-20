@@ -18,9 +18,13 @@ private:
 	static TextButton analyzeButton;
 	static TextButton inputButton;
 	static TextButton acceptButton;
+	static TextButton airliftButton;
+	static TextButton blockadeButton;
+	static TextButton giftButton;
 	static sf::RectangleShape commandsFrame;
 	static std::unordered_set<TextButton*> playersButtons;
 	static bool hasInitialized;
+	static bool areCardsVisible;
 	static TextButton* button;
 	static Map* map;
 	static std::unordered_set<std::unordered_set<Player*>*>* teams;
@@ -30,10 +34,16 @@ private:
 	static Territory* territory1;
 	static Territory* territory2;
 	static Player* player;
+	static int cardIndex;
 
 	static void initialize();
 	static void start();
 	static void handleTurn();
+	static void updateCards();
+	static void createCommand();
+	static void createAirlift();
+	static void createBlockade();
+	static void createGift();
 	static void pan();
 	static void cleanUp();
 	static void draw();
